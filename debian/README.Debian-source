@@ -1,0 +1,16 @@
+freetennis for Debian
+---------------------
+
+How I created the .orig.tar.gz :
+
+tar xjf freetennis-0.4.8.tar.bz2
+cd freetennis-0.4.8
+rm freetennis freetennis.o freetennis.cmi freetennis.cmx
+cd ..
+tar czf freetennis_0.4.8.orig.tar.gz freetennis-0.4.8
+md5sum *tar*
+
+c402d7644142f6142522c10c6953a33e  freetennis_0.4.8.orig.tar.gz
+9a8dc8f588420ff246b3f2b602ae02de  freetennis-0.4.8.tar.bz2
+
+ -- Bart Martens <bartm@knars.be>, Fri, 16 Jun 2006 23:12:04 +0200

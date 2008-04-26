@@ -1,0 +1,36 @@
+freetennis (0.4.8-4) unstable; urgency=low
+
+  * debian/freetennis.8: Man page corrections.  Closes: #433519.  Patch by
+    Andy Matteson <xt.knight@gmail.com>, thanks.
+  * debian/freetennis.desktop: Added .desktop file.  Closes: #435435.  Patch
+    by William Lima <wlima.amadeus@gmail.com>, thanks.
+  * Fixed debian-rules-ignores-make-clean-error.
+  * Fixed package-section-games-but-contains-no-game.
+
+ -- Bart Martens <bartm@debian.org>  Sat, 01 Mar 2008 10:24:27 +0100
+
+freetennis (0.4.8-3) unstable; urgency=low
+
+  * debian/control, debian/rules: Added missing dependency for architectures
+    using the bytecode version of the program.  Closes: #408149.
+  * debian/control: Replaced ${Source-Version} by ${source:Version}.
+  * debian/copyright: Updated for year 2007.
+
+ -- Bart Martens <bartm@knars.be>  Sat, 27 Jan 2007 07:37:58 +0100
+
+freetennis (0.4.8-2) unstable; urgency=low
+
+  * freetennis.ml, debian/*: Added separate binary package freetennis-common
+    for architecture independent files.
+  * Makefile, debian/rules, debian/control: Use ocamlopt or ocamlc.  Fixes
+    FTBFS.  Closes: #377499.
+  * debian/rules: No longer installing CHANGES.txt.
+
+ -- Bart Martens <bartm@knars.be>  Sat, 22 Jul 2006 19:30:22 +0200
+
+freetennis (0.4.8-1) unstable; urgency=low
+
+  * Initial release.  Closes: #373957.
+
+ -- Bart Martens <bartm@knars.be>  Fri, 16 Jun 2006 23:12:04 +0200
+

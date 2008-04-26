@@ -1,0 +1,26 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 01_sfx_path.dpatch by  <dogguy@pps.jussieu.fr>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad trunk~/freetennis.ml trunk/freetennis.ml
+--- trunk~/freetennis.ml	2005-11-21 22:20:33.000000000 +0100
++++ trunk/freetennis.ml	2008-04-26 11:51:10.000000000 +0200
+@@ -27,11 +27,11 @@
+    places. If you choose to customize them, use absolute paths without
+    the trailing slash. *)
+ 
+-let sfxDir = "sfx" (* where the wav files are located.
+-		      example of customization: /usr/share/freetennis/sounds *)
++let sfxDir = "/usr/share/sounds/freetennis-common/sfx" 
++(* where the wav files are located. example of customization: /usr/share/freetennis/sounds *)
+ 
+-let gfxDir = "graphics" (* where the pngs and subdirs are located. 
+-			   example of customization: /usr/share/freetennis/gfx *)
++let gfxDir = "/usr/share/images/freetennis-common/graphics" 
++(* where the pngs and subdirs are located. example of customization: /usr/share/freetennis/gfx *)
+     
+ 
+ 
