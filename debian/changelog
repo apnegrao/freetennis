@@ -10,11 +10,11 @@ freetennis (0.4.8-4) unstable; urgency=low
 
   [ Mehdi Dogguy ]
   * debian/control, debian/rules : updated.
-  * Using -custon flag for bytecode binary. Closes: #471594.
+  * Using -custom flag for bytecode binary. Closes: #471594.
   * Updating manpage freetennis.8
   * Enhance Makefile 
 
- -- Mehdi Dogguy <dogguy@pps.jussieu.fr>  Sat, 26 Apr 2008 19:24:56 +0200
+ -- Mehdi Dogguy <dogguy@pps.jussieu.fr>  Sat, 26 Apr 2008 19:28:55 +0200
 
 freetennis (0.4.8-3) unstable; urgency=low
 
