@@ -1,4 +1,4 @@
-.TH FREETENNIS 8 "July 17, 2007"
+.TH FREETENNIS 8 "Apr 26, 2008"
 .SH NAME
 freetennis \- free tennis simulation game
 .SH SYNOPSIS
@@ -13,8 +13,56 @@ A summary of options is included below.
 .B \-help, \-\-help
 Show summary of options.
 .TP
+.B \-p0 <name>
+The name of player 0 (default: ivan).
+.TP
+.B \-p1 <name>
+The name of player 1 (default: ivan).
+.TP
+.B \-donotshowpause 
+When the game is paused, do not show the "paused" sign. Useful for
+screenshots.
+.TP
+.B \-showfps
+Display the number of Frames Per Second (on the standard
+output). Useful for debugging.
+.TP
+.B \-aidebug
+Shows some info useful to debug AI.
+.TP
+.B \-realistic
+Make the game realistic. This alters the parabola visibility depending
+on the player and shot. Better gameplay, but not suitable for newbies.
+.TP
 .B \-newbie
-Make the game not realistic, but more suited to newbies.  The parabola is fully visible.
+Make the game not realistic, but more suited to newbies.  The parabola
+is fully visible.
+.TP
+.B \-nosound
+Run with no sound.
+.TP
+.B \-xres <integer>
+The horizontal resolution (default: 640).
+.TP
+.B \-yres <integer>
+The vertical resolution (default: 480).
+.TP
+.B \-port <integer>
+The TCP port to use. Makes sense with -client and -server. The default
+is 4000.
+.TP
+.B \-computerskill <integer>
+Skill level of computer. A number from 0 (very difficult) to 250 (very
+easy). Default is 190.
+.TP
+.B \-client <ip address>
+The IP address of the server. Only for multiplayer.
+.TP
+.B \-server 
+Run Free Tennis as server. Only for multiplayer.
+.TP
+.B \-surf <surface>
+SURF: surface for the court. Choices are "clay", "cement", "grass".
 .SH SEE ALSO
 http://freetennis.sourceforge.net/
 .br
@@ -22,5 +70,6 @@ http://freetennis.sourceforge.net/
 .SH AUTHOR
 freetennis was written by Maurizio Colucci <maurizio.colucci@gmail.com>.
 .PP
-This manual page was written by Bart Martens <bartm@knars.be>,
-for the Debian project (but may be used by others).
+This manual page was written by Bart Martens <bartm@knars.be> and
+updated by Mehdi Dogguy <dogguy@pps.jussieu.fr>, for the Debian
+project (but may be used by others).
