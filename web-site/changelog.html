@@ -1,0 +1,740 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+
+  <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
+  <title>Changelog - Free Tennis</title>
+
+
+</head>
+
+
+<body>
+
+<h1>Changelog - Free Tennis<br>
+
+</h1>
+
+<h2>New in 0.4.8</h2>
+
+<ul>
+
+  <li><span style="font-weight: bold;">Easier compilation:</span>
+gtkglarea is not&nbsp;needed to compile the game anymore. If you were unable to
+compile because of an <span style="font-weight: bold;">error "unbound
+value GlGtk.region_of_raw"</span>,
+try again. Similarly, if the precompiled executable does not run
+because you are missing the library "libgtkgl-2.0", try again.
+    <p>
+More informations: now your lablgtk2 does not need to be compiled with
+gtkglarea anymore. Only Debian and Ubuntu seemed to be doing that.</p>
+  </li>
+</ul>
+
+<h2>New in 0.4.7</h2>
+
+<ul>
+
+  <li>Fixed bug: the slow-motion keys had stopped working since
+version 0.4.5.</li>
+
+</ul>
+
+<h2>New in 0.4.6</h2>
+
+<ul>
+
+  <li>AI:
+    <p>Fixed <span style="font-weight: bold;">major
+bug</span>: when winning a passing shot, computer would believe
+he had won two balls, and would update his tactics accordingly. On the
+log run, he would wrongly prefer not to take the net. </p>
+
+    <p>Fixed minor bug: when human wins with a volee and computer
+is
+close to the net, computer would wrongly believe he had lost a ball
+taking the net, and update tactics. </p>
+
+  </li>
+
+</ul>
+
+<h2>New in 0.4.5</h2>
+
+<ul>
+
+  <li>
+    <p><span style="font-weight: bold;">fixed major
+bug </span>that prevented the game to work on fast computers
+(player
+would not serve). </p>
+
+  </li>
+
+  <li>
+    <p>AI: the computer is now more forgiving under net.</p>
+
+  </li>
+
+  <li>gameplay: tuned player speeds. There was too big a
+difference between the speed of Mats and that of Pete.</li>
+
+</ul>
+
+<h2>New in 0.4.4</h2>
+
+<ul>
+
+  <li><span style="font-weight: bold;">Gameplay
+tuning</span>:<br>
+
+    <p>players
+are now slower. Therefore, shots which are close to the line pay more;
+in addition, it is now reasonably easy to place a killing
+diagonal&nbsp; (previously it wasn't). Overall, this makes the
+game&nbsp;more
+realistic;</p>
+
+    <p>increased the vertical sprint speed;</p>
+
+    <p>decreased parabola visibility;</p>
+
+    <p>tuned bounce speed on all surfaces;</p>
+
+    <p> made dropshots and drop volleys easier; </p>
+
+  </li>
+
+  <li>
+    <p><span style="font-weight: bold;">AI tuning:</span>
+    </p>
+
+    <p> better logic in choosing between "approaching
+attack"
+and
+"attack with power shot"; </p>
+
+    <p>better logic choosing a volee: computer now plays an
+approaching volee when he is far from the net; </p>
+
+    <p>computer now approaches the net with a slower
+shot, in order to have more time to reach the net; </p>
+
+    <p>computer tries to get closer to the
+net than it did before, in order to play a stronger volee; </p>
+
+    <p>computer's passing shot is not so low and
+precise as it was before; </p>
+
+    <p>several other improvements.</p>
+
+  </li>
+
+  <li>
+    <p>Fixed bug in AI: when your service went out, computer
+would believe to have won a ball by not attacking, and would update his
+tactic accordingly.</p>
+
+  </li>
+
+</ul>
+
+<h2>New in 0.4.3</h2>
+
+<ul>
+
+  <li>Fixed crash. When smashing particularly close to the net,
+computer would sometimes be unable to find a feasible shot.</li>
+
+  <li>
+    <p>Control gameplay: new logic to prevent dropshot from being
+too easy.</p>
+
+  </li>
+
+</ul>
+
+<h2>New in 0.4.2</h2>
+
+<ul>
+
+  <li>Like 0.4.1, except that the bug is really fixed.</li>
+
+  <li>
+    <p>AI: the computer-driven player uses more sprint to get
+back to center.</p>
+
+  </li>
+
+</ul>
+
+<h2>New in 0.4.1</h2>
+
+<ul>
+
+  <li><span style="font-weight: bold;">Fixed major
+bug</span>: when
+playing a&nbsp;volley with a very low impact point, or very close
+to
+the net,&nbsp;your initial shot would appear too long and
+impossible to
+put in. Happened especially with Ivan.</li>
+
+</ul>
+
+<h2>New in 0.4</h2>
+
+<ul>
+
+  <li><span style="font-weight: bold;">Major gameplay</span>:
+placing
+an unreachable dropshot is not so easy anymore. If you make your
+parabola hit the ground too vertically, you are likely to hit net.<span style="font-weight: bold;"></span></li>
+
+  <li>
+    <p><span style="font-weight: bold;">Major
+graphics</span>: computer
+now moves towards the ball even&nbsp;when he knows he can't reach
+it,
+or when it is going out. This way you don't know&nbsp;you won the
+point
+until the very last moment. This increases realism and was a requested
+feature.</p>
+
+  </li>
+
+  <li>
+    <p><span style="font-weight: bold;">Major AI</span>:
+computer now sprints to get back to center when he is very
+decentered horizontally. This affects gameplay, because moving the
+computer with a short diagonal and then place
+a killing down-the-line is not so easy anymore.</p>
+
+  </li>
+
+  <li>Fixed rare crash: do a very short dropshot (backspin) which
+dies
+close to the net, and the computer would not find a candidate impact
+point.</li>
+
+  <li>
+    <p>Fixed rare crash (human player unable to create a suitable
+initial aim).</p>
+
+  </li>
+
+  <li>You now get a visual feedback on fault (not just a sound).</li>
+
+  <li>
+    <p>AI: the computer player would favour a volee close to the
+net
+even though he did not want to take the net at that time, and he was
+close to the baseline.</p>
+
+  </li>
+
+  <li>
+    <p>AI tuning (Pete's interlocutory shot)</p>
+
+  </li>
+
+</ul>
+
+<h2>New in 0.3.15</h2>
+
+* Fixed crash (the human player was unable to find a good initial<br>
+
+&nbsp; trajectory on forwards strech shot).<br>
+
+<br>
+
+* AI - Fixed bug. The computer-driven player was updating his tactics<br>
+
+&nbsp; only in those games when he was serving.<br>
+
+<br>
+
+* AI: ivan, on the clay, was doing interlocutory shots that were too<br>
+
+&nbsp; short and not rewarding on that surface.<br>
+
+<br>
+
+<h2>New in 0.3.14</h2>
+
+<br>
+
+* <span style="font-weight: bold;">major AI</span>:
+computer now learns whether it is best to take the net or<br>
+
+&nbsp; to stay back. Affects gameplay.<br>
+
+<br>
+
+* gameplay tuning: computer is more forgiving in passingshot; computer<br>
+
+&nbsp; covers the diagonal more when at net; decreased running
+speed of<br>
+
+&nbsp; mats; improved Pete's logic in choosing the shot; <br>
+
+<br>
+
+<br>
+
+* gameplay: sometimes the (linux) kernel would halt the game for a few<br>
+
+&nbsp; milliseconds (e.g. when swapping memory). Then, when the
+game would<br>
+
+&nbsp; resume, the ball would travel too much in a single frame,
+making it<br>
+
+&nbsp; impossible to reach. This is now fixed with a new algo for<br>
+
+&nbsp; calculating the amount of time passed since the last frame.<br>
+
+<br>
+
+* AI: changed logic with which _human_ players choose the impact<br>
+
+&nbsp; point. High impacts are preferred. This implies your passing
+shots<br>
+
+&nbsp; will be faster (since your impact is higher, your shot will
+be more<br>
+
+&nbsp; straight and therefore more powerful).<br>
+
+<br>
+
+* crash fixed: sometimes the game would crash on volee, especially<br>
+
+&nbsp; with ivan. (the reason was that the default trajectory was
+too<br>
+
+&nbsp; vertical).<br>
+
+<br>
+
+* control logic: if you increase the shot height (right mouse button),<br>
+
+&nbsp; and the resulting shot happens to be too vertical, then the
+shot<br>
+
+&nbsp; length is increased as well. This makes lob more difficult
+and more<br>
+
+&nbsp; realistic.<br>
+
+<br>
+
+* bug fixed. Sometimes the initial shot was stuck, i.e. impossible to<br>
+
+&nbsp; change.<br>
+
+<br>
+
+* sound engine improved. If -nosound is given, there is no attempt to<br>
+
+&nbsp; initialize the sound system. This might (and might not)
+allow those<br>
+
+&nbsp; people who have trouble with the sound driver to play.<br>
+
+<br>
+
+* improvement for distro packagers: you can now customize the location<br>
+
+&nbsp; of the graphics and sfx dir by editing the first two lines of<br>
+
+&nbsp; freetennis.ml<br>
+
+<br>
+
+* changed default surface to cement: on the clay, newbies may find it<br>
+
+&nbsp; too difficult to place a killing shot.<br>
+
+<br>
+
+<h2>New in 0.3.7</h2>
+
+<br>
+
+* major bug fixed: sometimes, especially on volleys, the initial aim<br>
+
+&nbsp; would be impossible to change. This is now fixed.<br>
+
+<br>
+
+* major bug fixed: in two player mode, after starting the game once,<br>
+
+&nbsp; the server would refuse to start again unless you change the
+port or<br>
+
+&nbsp; wait a minute.<br>
+
+<br>
+
+* gameplay: tuned various attibutes (running speed of Pete, player<br>
+
+&nbsp; speed under net, bounces on the grass, computer passingShot
+skill,<br>
+
+&nbsp; computer sprint speed...)<br>
+
+<br>
+
+* graphics: the court lines and net ribbon are drawn with a less<br>
+
+&nbsp; saturated color. More realism.<br>
+
+<br>
+
+* AI: improvements in choosing the shot<br>
+
+<br>
+
+* gameplay: slightly improved the mouse input logic: players who are<br>
+
+&nbsp; weak at net have more trouble managing powerful passing
+shots. More<br>
+
+&nbsp; realistic.<br>
+
+<br>
+
+<br>
+
+* tuned fps calculation, so that the game is now smoother at high<br>
+
+&nbsp; refresh rates.<br>
+
+<br>
+
+* bug fixed: the human player was able to respond to service with a<br>
+
+&nbsp; volley.<br>
+
+<h2>New in 0.3.5</h2>
+
+<br>
+
+* gameplay: it is now possible to finetune the camera height with the<br>
+
+&nbsp; keys I and K.<br>
+
+<br>
+
+* new camera algorithm. The camera is steadier and oscillates<br>
+
+&nbsp; less. Also, the camera gets lower when you take the net.
+Finally,<br>
+
+&nbsp; there is a more clever logic to determine whether the player
+covers<br>
+
+&nbsp; the net and should therefore be transparent.<br>
+
+<br>
+
+* bug fixed: in 2d mode, on the client, the player below would appear<br>
+
+&nbsp; behind the net ribbon (wrong drawing order).<br>
+
+<br>
+
+* fixed minor bug in event management which caused slight delays in<br>
+
+&nbsp; the response.<br>
+
+<br>
+
+* bug fixed: the extent to which you can alter the running speed<br>
+
+&nbsp; during sprint was dependent on frame rate.<br>
+
+<br>
+
+* gameplay: lob is not so easy anymore.<br>
+
+<br>
+
+* AI: the computer-driven player does not do smashes that are<br>
+
+&nbsp; unrealistically weak anymore.<br>
+
+<br>
+
+* the string "too late" does not overlap the score anymore.<br>
+
+<br>
+
+<h2>New in 0.3</h2>
+
+<br>
+
+<br>
+
+* major bug fixed: on slow computers, the game was totally unplayable<br>
+
+&nbsp; because mouse input would be ignored for aiming (though not
+for<br>
+
+&nbsp; moving).<br>
+
+<br>
+
+* major bug fixed: in 2player mode, sometimes the game would hang or<br>
+
+&nbsp; crash at startup; the player would not start serving.<br>
+
+<br>
+
+* major crash fixed when diving unnecessarily;<br>
+
+<br>
+
+<br>
+
+* major gameplay: drop volley was too easy, by just pulling the mouse<br>
+
+&nbsp; backwards. Intuitively, in real tennis, if the opponent's
+shot is<br>
+
+&nbsp; very powerful, it is difficult to do a drop volley. But it
+wasn't<br>
+
+&nbsp; difficult in Free Tennis.<br>
+
+<br>
+
+&nbsp; This is now solved as follows: I introduced a "minimal shot
+power"<br>
+
+&nbsp; that depends on the speed of the opponent's shot. The power
+of your<br>
+
+&nbsp; volleys should not be less than this minimal power. If you
+try to<br>
+
+&nbsp; shorten the shot so that the power becomes less than the
+minimal<br>
+
+&nbsp; power, the height over the net is decreaased, and the ball
+is likely<br>
+
+&nbsp; to hit net.<br>
+
+<br>
+
+* major gameplay: dive is now reasonably easy to execute. It does not<br>
+
+&nbsp; hit the net by default, but is like any other volley (except
+you<br>
+
+&nbsp; have to press D to execute it). This is now acceptable
+because doing<br>
+
+&nbsp; drop volley is not so easy anymore (see above).<br>
+
+<br>
+
+* major gameplay: by just pulling backwards on a groundstroke, it was<br>
+
+&nbsp; too easy to turn it into a dropshot that bounces backwards,
+and is<br>
+
+&nbsp; therefore unreachable. This is not so easy anymore
+(increased the<br>
+
+&nbsp; minimum distance of the bounce from the net).<br>
+
+<br>
+
+* major gameplay: tuned difficulty of passing shots and volleys;<br>
+
+&nbsp; passing was too difficult. Fine-tuned some player skills as<br>
+
+&nbsp; well. Players now have different speeds at net and back, in
+order to<br>
+
+&nbsp; better simulate their skills and height.<br>
+
+<br>
+
+<br>
+
+* major gameplay - camera logic: sometimes, when you were decentered<br>
+
+&nbsp; horizontally, you were unable to see the court corner and
+therefore<br>
+
+&nbsp; could not aim properly. This is now fixed.<br>
+
+<br>
+
+* major gameplay: sprinting in the right direction is now easier: you<br>
+
+&nbsp; can slightly alter the running direction _during_ the sprint.<br>
+
+<br>
+
+* bug fixed: in two player mode, the client player was unable to aim<br>
+
+&nbsp; service properly (the mouse response was flipped - left went
+right<br>
+
+&nbsp; and viceversa).<br>
+
+<br>
+
+* crash fixed when doing dropshot that bounces backwards.<br>
+
+<br>
+
+* AI: when taking the net, the computer was covering too much the<br>
+
+&nbsp; diagonal, and too little the downtheline.<br>
+
+<br>
+
+* AI: on passing shot, the computer now aims close to the line even if<br>
+
+&nbsp; the skill level is low. (Passing shot makes no sense if not
+close to<br>
+
+&nbsp; the line.)<br>
+
+<br>
+
+* AI: the computer was doing some very long shots even in low<br>
+
+&nbsp; difficulty setting.<br>
+
+<br>
+
+* gameplay: in realistic mode, tuned the parabola visibility.<br>
+
+<br>
+
+* AI: attackers have a better attacking logic: now they can choose<br>
+
+&nbsp; to attack with a power shot (as opposed to an approaching
+shot).<br>
+
+<br>
+
+<h2>New in 0.2</h2>
+
+<br>
+
+* compilation: made Makefile portable. If you had problems compiling<br>
+
+&nbsp; Free Tennis, please give it another try.<br>
+
+<br>
+
+* gameplay: fixed bug where mouse sensitivity would depend on refresh<br>
+
+&nbsp; rate, making the player too slow or too fast at some refresh<br>
+
+&nbsp; rates. If your player was too slow or too fast, try again.<br>
+
+<br>
+
+* fixed crash: the game would crash when entering tiebreak.<br>
+
+<br>
+
+* score: games are now displayed on the screen (previously, only<br>
+
+&nbsp; points were).<br>
+
+<br>
+
+* AI, gameplay: improved the logic to decide the shot<br>
+
+<br>
+
+* AI: the computer now aims service;<br>
+
+<br>
+
+* gameplay: there is a new sprint system: when you press X, the<br>
+
+&nbsp; current mouse direction is locked, and the player starts<br>
+
+&nbsp; sprinting. As long as you keep X pressed, the player keeps
+sprinting<br>
+
+&nbsp; in that direction, regardlessly of mouse movements. When you
+depress<br>
+
+&nbsp; X, sprinting ends.<br>
+
+<br>
+
+* graphics: the available sprint energy is now displayed in a vertical<br>
+
+&nbsp; yellow bar.<br>
+
+<br>
+
+* score: fixed bug: on 7-5, the set would not finish.<br>
+
+<br>
+
+* graphics: the clay court has a better texture. the previous one was<br>
+
+&nbsp; too light.<br>
+
+<br>
+
+* fixed bug in hotspot calculation. Some animation frames would have<br>
+
+&nbsp; wrong position, resulting in jerky animation.<br>
+
+<br>
+
+* graphics: more player animations (the players run instead of sliding)<br>
+
+<br>
+
+* renamed command line options: -p0name to -p0 and -p1name to -p1.<br>
+
+<br>
+
+* fixed crash: sometimes the players attempted to hit a ball below the<br>
+
+&nbsp; ground, and the game would crash. Thanks to Tuukka Hastrup
+for the<br>
+
+&nbsp; report.<br>
+
+<br>
+
+<br>
+
+* gameplay: volees were unrealistically powerful<br>
+
+<br>
+
+* gameplay: in realistic mode, the parabola was invisible for volleys.<br>
+
+<br>
+
+* learnability: displaying a hint to press either F or G to grab the<br>
+
+&nbsp; mouse input.<br>
+
+<br>
+
+<h2>0.1</h2>
+
+<br>
+
+This is the first release.
+</body>
+</html>

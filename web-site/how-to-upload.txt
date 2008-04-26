@@ -1,0 +1,1 @@
+scp   -r *  seguso@shell.sf.net:/home/groups/f/fr/freetennis/htdocs/

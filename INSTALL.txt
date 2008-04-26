@@ -1,0 +1,88 @@
+This is a guide to compile and run the program.
+
+Gentoo
+------
+
+An ebuild seems to be available here:
+
+  http://forums.gentoo.org/viewtopic-p-2892430.html
+
+Debian Sarge or Ubuntu Breezy
+-----------------------------
+
+With your package manager (probably Synaptic), install the following
+packages:
+
+libcamlimages-ocaml-dev
+libsdl-ocaml-dev
+libsdl-gfx1.2-dev
+libsdl-mixer1.2-dev
+libsdl-image1.2-dev
+libsdl-ttf2.0-dev
+liblablgl-ocaml-dev
+liblablgtk2-ocaml-dev
+libgdk-pixbuf2
+
+
+(This will also install many dependent packages, among which the ocaml
+compiler.)
+
+
+---
+
+Unpack the archive freetennis-xxxx.tar.bz2. Enter the directory
+"freetennis" which will have been created.
+
+Type
+
+    make
+
+
+The ocaml compiler will be invoked and the program should be compiled
+without errors, and a new executable called "freetennis" should appear
+in the current directory.
+
+
+---
+
+To run the game, type
+
+./freetennis -newbie
+
+
+For an additional list of options, see the manual (on the web site or
+in the source distribution).
+
+
+
+Other distros
+-------------
+
+Install the packages ocaml, lablgtk2, lablgl, camlimages, ocamlsdl
+(the actual package names could be different).
+
+---
+
+Unpack the archive freetennis-xxxx.tar.bz2. Enter the directory
+"freetennis" which will have been created.
+
+Type
+
+    make
+
+
+The ocaml compiler will be invoked and the program should be compiled
+without errors, and a new executable called "freetennis" should appear
+in the current directory.
+
+
+---
+
+To run the game, type
+
+./freetennis -newbie
+
+
+For an additional list of options, see the manual (on the web site or
+in the source distribution).
+

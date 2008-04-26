@@ -1,0 +1,57 @@
+* Due to a request, added an option to configure the key used for
+  diving.
+
+* crash: doAllTests failed in volee with mats agains ivan
+
+* if computer wins ball with a passingShot close to the net, he
+  believes he has won by taking the net!
+
+* AI: have computerSkill alter the random error, not the distance from
+  the line. That should be fixed.
+
+* AI: split computer tactics into stayBack, attack when opponent tired,
+  attack as soon as possible?
+
+* ivan interlocutory shot is too short and diag? 
+
+* ai: learning. The computer should notice you tend to take the net
+  after service, and open for topspin.
+
+* sprint sounds looping
+
+* on slow PCs, the impact is not on the racket. this is because
+  updateAnim never skips frames
+
+* redraw stretchForward frames
+
+* make the length of frame in walk anim depend on run speed
+
+* computer does not sprint to reach dropshots
+
+* computer never makes mistakes
+
+* computer ignores pc_tendsToAnticipateGroundShots
+
+* when taking the net, pete arrives and then gets back. It is like the
+  timer were reset to 0
+
+
+* in calculating distance, the AI does not take dropshots into account
+
+
+* add mac, boris (like pete, but more spin) and andre (like ivan, but
+  anticipating)
+
+* crashes if I do volee with spin = 0.0, and if service has 0.0 spin
+
+* rip graphics: ivan: forehand and backhand at 20.06. forehand:22.13
+  Arovescio:26.19 perfect Brovescio:30.0 perfect, Brovescio 43.57
+  perfect, Adritto:36.30 , Adrittov:45.31 , Bsmash:46.50 --- riprendi a 0.50
+
+  mac:Aforehand 22.31,  Arovesciov 22.34 Bdritto:40.50   Arovesciov:43.25 perfetta
+
+
+* parabola opacity should also depend on running speed.
+
+* interpolate frames
+
