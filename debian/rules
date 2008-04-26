@@ -57,7 +57,9 @@ binary-arch: build install
 	dh_desktop
 	dh_installman -p freetennis debian/freetennis.8
 	dh_link 
-	dh_strip 
+	if [ -x /usr/bin/ocamlopt ]; then \
+		dh_strip;                 \
+	fi
 	dh_compress 
 	dh_fixperms 
 	dh_makeshlibs
