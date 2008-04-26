@@ -1,5 +1,6 @@
 freetennis (0.4.8-4) unstable; urgency=low
 
+  [ Bart Martens ]
   * debian/freetennis.8: Man page corrections.  Closes: #433519.  Patch by
     Andy Matteson <xt.knight@gmail.com>, thanks.
   * debian/freetennis.desktop: Added .desktop file.  Closes: #435435.  Patch
@@ -7,7 +8,13 @@ freetennis (0.4.8-4) unstable; urgency=low
   * Fixed debian-rules-ignores-make-clean-error.
   * Fixed package-section-games-but-contains-no-game.
 
- -- Bart Martens <bartm@debian.org>  Sat, 01 Mar 2008 10:24:27 +0100
+  [ Mehdi Dogguy ]
+  * debian/control, debian/rules : updated.
+  * Using -custon flag for bytecode binary. Closes: #471594.
+  * Updating manpage freetennis.8
+  * Enhance Makefile 
+
+ -- Mehdi Dogguy <dogguy@pps.jussieu.fr>  Sat, 26 Apr 2008 19:24:56 +0200
 
 freetennis (0.4.8-3) unstable; urgency=low
 
