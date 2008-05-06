@@ -1,11 +1,14 @@
 freetennis (0.4.8-5) unstable; urgency=low
 
-  * debian/control, debian/rules : updated.
-  * Using -custom flag for bytecode binary. Closes: #471594.
-  * Updating manpage freetennis.8
-  * Enhance Makefile
+  * In debian/control : Delete ocaml-base-nox dependency.
+  * In debain/rules : not striping bytecode executable, not using OCAMLRUN
+    anymore.
+  * Using -custom flag for bytecode binary, Closes: #471594.
+  * Updating manpage to have all freetennis options.
+  * Enhance Makefile (more generic)
+  * Setting Maintainer field to d-o-m, and myself as uploader.
 
- -- Mehdi Dogguy <dogguy@pps.jussieu.fr>  Sat, 26 Apr 2008 19:28:55 +0200
+ -- Mehdi Dogguy <dogguy@pps.jussieu.fr>  Tue, 06 May 2008 14:24:33 +0200
 
 freetennis (0.4.8-4) unstable; urgency=low
 
