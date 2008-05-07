@@ -1,9 +1,8 @@
 freetennis (0.4.8-5) unstable; urgency=low
 
-  * In debian/control : Delete ocaml-base-nox dependency.
-  * In debain/rules : not striping bytecode executable, not using OCAMLRUN
-    anymore.
   * Using -custom flag for bytecode binary, Closes: #471594.
+	- Removing ocaml-base-nox dependency.
+	- Not stripping bytecode executable because it's custom.
   * Updating manpage to have all freetennis options.
   * Enhance Makefile (more generic)
   * Setting Maintainer field to d-o-m, and myself as uploader.
