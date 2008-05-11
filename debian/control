@@ -3,7 +3,7 @@ Section: games
 Priority: optional
 Maintainer: Debian OCaml Maintainers <debian-ocaml-maint@lists.debian.org>
 Uploaders: Mehdi Dogguy <dogguy@pps.jussieu.fr>
-Build-Depends: debhelper (>= 6), ocaml (>= 3.10.0), dpatch, libcamlimages-ocaml-dev, libsdl-ocaml-dev, libsdl-gfx1.2-dev, libsdl-mixer1.2-dev, libsdl-image1.2-dev, libsdl-ttf2.0-dev, liblablgl-ocaml-dev, liblablgtk2-ocaml-dev, libgdk-pixbuf2
+Build-Depends: debhelper (>= 6), ocaml (>= 3.10.0), dpatch, libcamlimages-ocaml-dev, libsdl-ocaml-dev, libsdl-gfx1.2-dev, libsdl-mixer1.2-dev, libsdl-image1.2-dev, libsdl-ttf2.0-dev, liblablgl-ocaml-dev, liblablgtk2-ocaml-dev
 Standards-Version: 3.7.3
 Vcs-Svn: svn://svn.debian.org/svn/pkg-ocaml-maint/trunk/packages/freetennis
 Vcs-Browser: http://svn.debian.org/wsvn/pkg-ocaml-maint/trunk/packages/freetennis/trunk/

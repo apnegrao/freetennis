@@ -1,13 +1,17 @@
 freetennis (0.4.8-5) unstable; urgency=low
 
+  [ Mehdi Dogguy ]
   * Using -custom flag for bytecode binary, Closes: #471594.
-	- Removing ocaml-base-nox dependency.
-	- Not stripping bytecode executable because it's custom.
+    - Removing ocaml-base-nox dependency.
+    - Not stripping bytecode executable because it's custom.
   * Updating manpage to have all freetennis options.
   * Enhance Makefile (more generic)
   * Setting Maintainer field to d-o-m, and myself as uploader.
 
- -- Mehdi Dogguy <dogguy@pps.jussieu.fr>  Tue, 06 May 2008 14:24:33 +0200
+  [ Samuel Mimram ]
+  * Removed useless build-dep on libgdk-pixbuf2.
+
+ -- Mehdi Dogguy <dogguy@pps.jussieu.fr>  Thu, 08 May 2008 13:31:00 +0200
 
 freetennis (0.4.8-4) unstable; urgency=low
 
