@@ -31,7 +31,7 @@ Description: Free Tennis - simulation game
 
 Package: freetennis
 Architecture: any
-Depends: ${FreetennisRuntime}, ${shlibs:Depends}, ${misc:Depends}, freetennis-common (= ${source:Version})
+Depends: ${F:FreetennisRuntime}, ${shlibs:Depends}, ${misc:Depends}, freetennis-common (= ${source:Version})
 Description: Free Tennis - simulation game
  Free Tennis is a free software tennis simulation game.  The game can be played
  against an A.I. or human-vs-human via LAN or internet.
