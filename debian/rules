@@ -1,73 +1,26 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
-# Sample debian/rules that uses debhelper.
-# This file was originally written by Joey Hess and Craig Small.
-# As a special exception, when this file is copied by dh-make into a
-# dh-make output file, you may use that output file without restriction.
-# This special exception was added by Craig Small in version 0.37 of dh-make.
 
-# Uncomment this to turn on verbose mode.
-#export DH_VERBOSE=1
+export DH_VERBOSE=1
 
-include /usr/share/dpatch/dpatch.make
+include /usr/share/ocaml/ocamlvars.mk
+include /usr/share/ocaml/ocamlinit.mk
 
-OCAMLABI = $(shell ocamlc -version)
-BYTECODE = $(shell [ -x /usr/bin/ocamlopt ] || echo yes)
-OCAMLBEST = $(if $(BYTECODE),byte,opt)
-OCAMLRUN = $(if $(BYTECODE),ocaml-base-$(OCAMLABI))
+override_dh_auto_build:
+	$(MAKE) -f debian/Makefile freetennis.$(OCAML_BEST)
 
-configure: configure-stamp
-configure-stamp:
-	dh_testdir
-	touch configure-stamp
+override_dh_auto_clean:
+	$(MAKE) -f debian/Makefile clean
 
-build: build-stamp
-
-build-stamp: patch configure-stamp 
-	dh_testdir
-	$(MAKE) -f debian/Makefile freetennis.$(OCAMLBEST)
-	touch $@
-
-clean: unpatch
-	dh_testdir
-	dh_testroot
-	rm -rf  *.cm[oixa] *.cmxa *.o *.a *~ freetennis.opt freetennis.byte
-	rm -f build-stamp configure-stamp
-	dh_clean 
-
-install: build
-	dh_testdir
-	dh_testroot
-	dh_clean -k 
-	dh_installdirs
+override_dh_auto_install:
 	install $(CURDIR)/freetennis $(CURDIR)/debian/freetennis/usr/games/freetennis
 	cp -r $(CURDIR)/sfx $(CURDIR)/debian/freetennis-common/usr/share/sounds/freetennis-common
 	cp -r $(CURDIR)/graphics $(CURDIR)/debian/freetennis-common/usr/share/images/freetennis-common
 	cp $(CURDIR)/debian/freetennis.desktop $(CURDIR)/debian/freetennis/usr/share/applications
 	cp $(CURDIR)/debian/freetennis.xpm $(CURDIR)/debian/freetennis/usr/share/pixmaps/
+ifeq ($(OCAML_OPT_ARCH),)
+	echo 'F:FreetennisRuntime=liblablgl-ocaml,liblablgtk2-ocaml,libsdl-ocaml,$(OCAML_RUNTIME)' >> debian/laby.substvars
+endif
 
-binary-indep: build install
-
-binary-arch: build install
-	dh_testdir 
-	dh_testroot 
-	dh_installchangelogs 
-	dh_installdocs 
-	dh_installexamples 
-	dh_desktop
-	dh_installman -p freetennis debian/freetennis.8
-	dh_link 
-	if [ -x /usr/bin/ocamlopt ]; then \
-		dh_strip;                 \
-	fi
-	dh_compress 
-	dh_fixperms 
-	dh_makeshlibs
-	dh_installdeb 
-	dh_shlibdeps
-	dh_gencontrol
-	dh_md5sums 
-	dh_builddeb 
-
-binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install configure
+%:
+	dh --with quilt $@

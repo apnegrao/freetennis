@@ -4,7 +4,7 @@ CMXA = bigarray.cmxa sdl.cmxa lablgtk.cmxa lablgl.cmxa graphics.cmxa sdlmixer.cm
 CMA  = $(CMXA:.cmxa=.cma)
 
 OFLAGS = -I +camlimages -I +lablGL -I +lablgtk2 -I +sdl -w Aelzy
-BFLAGS = $(OFLAGS) -custom
+BFLAGS = $(OFLAGS)
 
 OCAMLC=ocamlc
 OCAMLOPT=ocamlopt

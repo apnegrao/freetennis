@@ -1,0 +1,26 @@
+From: Mehdi Dogguy <dogguy@pps.jussieu.fr>
+Date: Tue, 23 Jun 2009 13:27:17 +0200
+Subject: [PATCH] Fix sfx path
+
+---
+ freetennis.ml |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/freetennis.ml b/freetennis.ml
+index cc3042e..75089fa 100644
+--- a/freetennis.ml
++++ b/freetennis.ml
+@@ -27,10 +27,10 @@
+    places. If you choose to customize them, use absolute paths without
+    the trailing slash. *)
+ 
+-let sfxDir = "sfx" (* where the wav files are located.
++let sfxDir = "/usr/share/sounds/freetennis-common/sfx" (* where the wav files are located.
+ 		      example of customization: /usr/share/freetennis/sounds *)
+ 
+-let gfxDir = "graphics" (* where the pngs and subdirs are located. 
++let gfxDir = "/usr/share/images/freetennis-common/graphics" (* where the pngs and subdirs are located.
+ 			   example of customization: /usr/share/freetennis/gfx *)
+     
+ 
+-- 
