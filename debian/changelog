@@ -7,7 +7,7 @@ freetennis (0.4.8-6) unstable; urgency=low
   * Bump standards version to 3.8.2, no changes needed.
   * Update packaging:
     - Switch packaging to git
-    - Use « dh --with quilt »
+    - Use « dh --with quilt » and bump compat to 7
     - Use quilt instead of dpatch
     - Add dh-ocaml as a build-dependency
     - Drop custom flag for non-native binaries and needed dependencies.
