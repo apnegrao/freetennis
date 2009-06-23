@@ -13,11 +13,6 @@ override_dh_auto_clean:
 	$(MAKE) -f debian/Makefile clean
 
 override_dh_auto_install:
-	install $(CURDIR)/freetennis $(CURDIR)/debian/freetennis/usr/games/freetennis
-	cp -r $(CURDIR)/sfx $(CURDIR)/debian/freetennis-common/usr/share/sounds/freetennis-common
-	cp -r $(CURDIR)/graphics $(CURDIR)/debian/freetennis-common/usr/share/images/freetennis-common
-	cp $(CURDIR)/debian/freetennis.desktop $(CURDIR)/debian/freetennis/usr/share/applications
-	cp $(CURDIR)/debian/freetennis.xpm $(CURDIR)/debian/freetennis/usr/share/pixmaps/
 ifeq ($(OCAML_OPT_ARCH),)
 	echo 'F:FreetennisRuntime=liblablgl-ocaml,liblablgtk2-ocaml,libsdl-ocaml,$(OCAML_RUNTIME)' >> debian/laby.substvars
 endif

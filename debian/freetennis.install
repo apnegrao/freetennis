@@ -1,0 +1,3 @@
+freetennis			usr/games/
+debian/freetennis.desktop	usr/share/applications
+debian/freetennis.xpm		usr/share/pixmaps
