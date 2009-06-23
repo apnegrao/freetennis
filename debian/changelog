@@ -2,6 +2,8 @@ freetennis (0.4.8-6) UNRELEASED; urgency=low
 
   * Using make -j doesn't cause the package to FTBFS, Closes: #483792. 
   * Switch packaging to git
+  * Drop 02_Makefile.dpatch and use debian/Makefile instead (Same content
+    but easier to modify).
 
  -- Mehdi Dogguy <dogguy@pps.jussieu.fr>  Tue, 23 Jun 2009 11:08:47 +0200
 
