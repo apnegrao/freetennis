@@ -1,4 +1,4 @@
-freetennis (0.4.8-6) UNRELEASED; urgency=low
+freetennis (0.4.8-6) unstable; urgency=low
 
   * Using make -j doesn't cause the package to FTBFS anymore, Closes: #483792.
   * Fix FTBFS: Add graphics.cmxa when compiling, Closes: #534043.
