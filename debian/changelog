@@ -12,6 +12,10 @@ freetennis (0.4.8-6) unstable; urgency=low
     - Add dh-ocaml as a build-dependency
     - Drop custom flag for non-native binaries and needed dependencies.
     - Drop useless build-dependency: libcamlimages-ocaml-dev
+    - Fix copyright-refers-to-symlink-license
+    - Move freetennis manpage and menu to correct sections
+  * Fix menu-icon-too-big (reduced its size to 32×32)
+  
 
  -- Mehdi Dogguy <dogguy@pps.jussieu.fr>  Tue, 23 Jun 2009 11:08:47 +0200
 
