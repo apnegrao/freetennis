@@ -1,6 +1,6 @@
 freetennis (0.4.8-6) UNRELEASED; urgency=low
 
-  * Using make -j doesn't cause the package to FTBFS, Closes: #483792. 
+  * Using make -j doesn't cause the package to FTBFS anymore, Closes: #483792.
   * Fix FTBFS: Add graphics.cmxa when compiling, Closes: #534043.
   * Drop 02_Makefile.dpatch and use debian/Makefile instead (Same content
     but easier to modify).
@@ -9,6 +9,7 @@ freetennis (0.4.8-6) UNRELEASED; urgency=low
     - Switch packaging to git
     - Use « dh --with quilt »
     - Use quilt instead of dpatch
+    - Add dh-ocaml as a build-dependency
     - Drop custom flag for non-native binaries and needed dependencies.
     - Drop useless build-dependency: libcamlimages-ocaml-dev
 
