@@ -3,8 +3,7 @@ Section: games
 Priority: optional
 Maintainer: Debian OCaml Maintainers <debian-ocaml-maint@lists.debian.org>
 Uploaders: Mehdi Dogguy <dogguy@pps.jussieu.fr>
-Build-Depends:
- debhelper (>= 7.0.52),
+Build-Depends: debhelper (>= 7.0.52),
  ocaml (>= 3.11.0),
  dh-ocaml (>= 0.4.1),
  quilt (>= 0.46-7),
