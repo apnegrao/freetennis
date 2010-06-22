@@ -1,3 +1,12 @@
+freetennis (0.4.8-8) unstable; urgency=low
+
+  * Use dh-ocaml to compute dependencies automatically
+  * Bump standards to 3.8.4
+  * Update e-mail address and drop DMUA
+  * Use 3.0 (quilt) format
+
+ -- Mehdi Dogguy <mehdi@debian.org>  Tue, 22 Jun 2010 16:08:01 +0200
+
 freetennis (0.4.8-7) unstable; urgency=low
 
   * Using .install files instead of copying by hand.
@@ -75,4 +84,3 @@ freetennis (0.4.8-1) unstable; urgency=low
   * Initial release.  Closes: #373957.
 
  -- Bart Martens <bartm@knars.be>  Fri, 16 Jun 2006 23:12:04 +0200
-

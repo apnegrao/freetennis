@@ -4,7 +4,6 @@
 export DH_VERBOSE=1
 
 include /usr/share/ocaml/ocamlvars.mk
-include /usr/share/ocaml/ocamlinit.mk
 
 override_dh_auto_build:
 	$(MAKE) -f debian/Makefile freetennis.$(OCAML_BEST)
@@ -12,10 +11,5 @@ override_dh_auto_build:
 override_dh_auto_clean:
 	$(MAKE) -f debian/Makefile clean
 
-override_dh_auto_install:
-ifeq ($(OCAML_OPT_ARCH),)
-	echo 'F:FreetennisRuntime=liblablgl-ocaml,liblablgtk2-ocaml,libsdl-ocaml,$(OCAML_RUNTIME)' >> debian/laby.substvars
-endif
-
 %:
-	dh --with quilt $@
+	dh --with quilt,ocaml $@
