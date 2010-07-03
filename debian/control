@@ -15,7 +15,7 @@ Build-Depends: debhelper (>= 7.0.52),
  liblablgl-ocaml-dev,
  liblablgtk2-ocaml-dev
 Standards-Version: 3.8.4
-Vcs-Svn: svn://svn.debian.org/svn/pkg-ocaml-maint/trunk/packages/freetennis
+Vcs-Git: git://git.debian.org/git/pkg-ocaml-maint/packages/freetennis.git
 Vcs-Browser: http://git.debian.org/?p=pkg-ocaml-maint/packages/freetennis.git
 Homepage: http://freetennis.sourceforge.net/
 
