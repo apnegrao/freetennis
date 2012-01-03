@@ -1,4 +1,4 @@
-freetennis (0.4.8-9) UNRELEASED; urgency=low
+freetennis (0.4.8-9) unstable; urgency=low
 
   [ Stéphane Glondu ]
   * debian/control: update Vcs-* to point to git repository
@@ -6,7 +6,7 @@ freetennis (0.4.8-9) UNRELEASED; urgency=low
   [ Mehdi Dogguy ]
   * Bump Standards-Version to 3.9.2, no changes needed.
 
- -- Mehdi Dogguy <mehdi@debian.org>  Tue, 03 Jan 2012 17:15:47 +0100
+ -- Mehdi Dogguy <mehdi@debian.org>  Tue, 03 Jan 2012 17:16:18 +0100
 
 freetennis (0.4.8-8) unstable; urgency=low
 
