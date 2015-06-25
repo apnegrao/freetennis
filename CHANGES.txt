@@ -1,1 +1,8 @@
-Please see web-site/changelog.html
+-Code was subject to a significant refactor: 
+ - freetennis.ml source file was split into multiple files;
+ - Some compiler warnings were fixed.
+-New way of controlling the player:
+ - Player movement is now controlled by keyboard keys ('a', 's', 'd' and 'w' by default)
+ - Ball placement and parabola continue to be controlled by the mouse.
+
+
