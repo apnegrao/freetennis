@@ -19,9 +19,9 @@ Download and extract the zip file. From the terminal, 'cd' to the extracted dir 
 ##How to Play
 To start playing, open a terminal, go to the game dir and run one of the following commands:  
 './freetennis -newbie'  
-'./freetennis -realistic' 
-With the newbie option, the game shows the parabola corresponding to the player's shot, allowing him to see the trajectory and placement of the ball before the shot is made. This is recommended for...newbies.  
-With the realistic option, the parabola is not visible, except on a few situations. Check section "Making the game realistic" of the [game's manual](http://freetennis.sourceforge.net/manual).  
+'./freetennis -realistic'  
+With the **newbie** option, the game shows the parabola corresponding to the player's shot, allowing him to see the trajectory and placement of the ball before the shot is made. This is recommended for...newbies.  
+With the **realistic** option, the parabola is not visible, except on a few situations. Check section "Making the game realistic" of the [game's manual](http://freetennis.sourceforge.net/manual).  
 There are several other optional command line parameters available. Type './freetennis -help' to see the full list.
 
 After the game starts, press 'g' to attach the mouse to the game or 'f' to play in fullscreen.
