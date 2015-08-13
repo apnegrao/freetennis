@@ -48,7 +48,9 @@ let whoServes s =
 		 set. *)
 	      if ((q.games.(0) +  q.games.(1)) mod 2 ) = 0 then firstToServe else 1 - firstToServe
 
-(* As far as I know, this is only used to draw the score *)
+(* As the name indicates, this functions prints 2d elements such as the score and 
+other strings shown in various partsof the game ('Pause', 'Fault', etc...), as well
+as the energy bar of the player *)
 let render2dStuff ~players ~ball ~serverData ~doNotShowPause ~pausedOnTheOtherSide 
 		~pausedWithKey ~noOneIsServing ~windowHt ~windowWt ~handleOfTexture ~s =
 		let plBelow =
@@ -58,6 +60,9 @@ let render2dStuff ~players ~ball ~serverData ~doNotShowPause ~pausedOnTheOtherSi
 	    	and h = 25.0 *. factor
 	    	and d2 = (22.0 *. 22.0 /. 26.0) *. factor
 	    	and h2 = 22.0 *. factor in
+		(** Render score *)
+		(*I'm pretty convinced that these renderNumber,renderString09 and 
+		renderNumber09 can be merged...*)
 		let renderNumber n destx desty =
 				    GlDraw.color ~alpha:1.0 (1.0 , 1.0, 1.0);
 
@@ -151,65 +156,28 @@ let render2dStuff ~players ~ball ~serverData ~doNotShowPause ~pausedOnTheOtherSi
 				Gl.disable `depth_test;
 
 
-
-				let ballIsInPlay = 
-				    match ball.b_state with
-					| BS_Still _ -> false
-					| BS_Moving bsm ->
-					      bsm.bsm_isItGoodSoFar
-				in
-				let shouldRenderFault = 
-				    match ball.b_state with
-					| BS_Still _ -> false
-					| BS_Moving bsm ->
-					      not bsm.bsm_isItGoodSoFar  && bsm.bsm_bouncesSoFar = 1
-				in
-				let shouldRenderTooLate = 
-				    match plBelow with
-					| HP h ->
-					      (match h.hp_state with
-						   | HPS_DivingFake (_, reas) ->
-							 (match reas with
-							      | DiveTooLate ->
-								    true
-									
-							      | _ -> false)
-						   | HPS_GettingUpAfterDive (_, _, tooLate) ->
-							 tooLate
-						   | _ -> false)
-					| _ -> false
-				in
-
-				if not noOneIsServing || not ballIsInPlay || pausedWithKey (*vd.vd_pausedWithKey*) || pausedOnTheOtherSide then
-				    match s.sc_state with
-					| TieBreak points -> 
+				match s.sc_state with
+				| TieBreak points -> 
 					      
-					      (let w = whoServes s in
-					       let tieStr =  string_of_int points.(w) ^ " " ^ string_of_int points.(1-w) in
-					       let destX =  float_of_int windowWt -. d2 *. float_of_int (String.length tieStr) in
-					       renderString09 tieStr destX 0.0 ;
-					       if not shouldRenderTooLate  then 
-						   renderString09 "6 6" 0.0 0.0
-					       else
-						   ())
+					(let w = whoServes s in
+					let tieStr =  string_of_int points.(w) ^ " " ^ string_of_int points.(1-w) in
+					let destX =  float_of_int windowWt -. d2 *. float_of_int (String.length tieStr) in
+					renderString09 tieStr destX 0.0 ;
+					renderString09 "6 6" 0.0 0.0
+					);
 						  
-						  
-					| NoTieBreak n ->
-					      
-					      (let w = whoServes s in
-					       renderNumber n.points.(w)     (float_of_int windowWt -. d *. 2.4)     0.0;
-					       renderNumber n.points.(1-w)   (float_of_int windowWt -. d *. 1.0)     0.0;
-					       
-					       if not shouldRenderTooLate  then
-						   let scoreStr = 
-						       (string_of_int (n.games.(0)) ^ " " ^ string_of_int (n.games.(1))) in
-						   renderString09 scoreStr 0.0 0.0 
-					       else
-						   ())
-				else
-				    ();
+				| NoTieBreak n ->
+					(let w = whoServes s in
+					renderNumber n.points.(w)     (float_of_int windowWt -. d *. 2.4)     0.0;
+					renderNumber n.points.(1-w)   (float_of_int windowWt -. d *. 1.0)     0.0;
+	       
+					let scoreStr = 
+						(string_of_int (n.games.(0)) ^ " " ^ string_of_int (n.games.(1))) in
+					renderString09 scoreStr 0.0 0.0 
+					);
+				(** End Render Score*)
 
-
+				(** Start rendering other stuff*)				
 				let renderTexture x0 y0 x1 y1 tex =
 				    GlDraw.color ~alpha:1.0 (1.0 , 1.0, 1.0);
 
@@ -230,9 +198,8 @@ let render2dStuff ~players ~ball ~serverData ~doNotShowPause ~pausedOnTheOtherSi
 				    
 				    List.iter foo verts;
 				    GlDraw.ends ();
-
-
 				in
+				(*Render local pause*)
 				if pausedWithKey (*vd.vd_pausedWithKey*) && not !doNotShowPause then
 				    let wtPixmap = 196.0 
 				    and htPixmap = 39.0 in
@@ -246,7 +213,7 @@ let render2dStuff ~players ~ball ~serverData ~doNotShowPause ~pausedOnTheOtherSi
 
 				else
 				    ();
-
+				(*Render remote pause*)
 				if pausedOnTheOtherSide && not !doNotShowPause then
 				    let wtPixmap = 408.0 
 				    and htPixmap = 39.0 in
@@ -260,7 +227,13 @@ let render2dStuff ~players ~ball ~serverData ~doNotShowPause ~pausedOnTheOtherSi
 				else
 				    ();
 
-				
+				(*Render Fault*)
+				let shouldRenderFault = 
+				    match ball.b_state with
+					| BS_Still _ -> false
+					| BS_Moving bsm ->
+					      not bsm.bsm_isItGoodSoFar  && bsm.bsm_bouncesSoFar = 1
+				in
 				if shouldRenderFault then 
 				    let yOffs = 50.0 in
 				    renderTexture 0.0 yOffs 86.0   (25.0 +. yOffs)
@@ -268,13 +241,30 @@ let render2dStuff ~players ~ball ~serverData ~doNotShowPause ~pausedOnTheOtherSi
 				else
 				    ();
 
-				if shouldRenderTooLate then 
-				    renderTexture 0.0 0.0 249.0   46.0
+				(*Render Too Late!*)
+				let shouldRenderTooLate = 
+				    match plBelow with
+					| HP h ->
+					      (match h.hp_state with
+						   | HPS_DivingFake (_, reas) ->
+							 (match reas with
+							      | DiveTooLate ->
+								    true
+									
+							      | _ -> false)
+						   | HPS_GettingUpAfterDive (_, _, tooLate) ->
+							 tooLate
+						   | _ -> false)
+					| _ -> false
+				in
+				if shouldRenderTooLate then
+					let yOffs = 50.0 in
+				    renderTexture 0.0 yOffs 100.0   (30.0 +. yOffs)
 					(StringMap.find (gfxDir ^ "/too-late.png") handleOfTexture)
 				else
 				    ();
 
-
+				(*Render energy bar*)
 				let maybeRenderSprint p = 
 				    match p with
 					| HP h ->
@@ -307,8 +297,7 @@ let render2dStuff ~players ~ball ~serverData ~doNotShowPause ~pausedOnTheOtherSi
 				GlMat.mode `modelview;)
 
 
-(** I think this will render (i.e., print in the output window) what happened since the last
-mainLoop round **)
+(** Renders 3d stuff, I guess**)
 let render ~players ~ball ~aidebug ~serverData ~camData 
 		~handleOfTexture ~realisticParabolaOpacity () =
 
@@ -358,7 +347,7 @@ let render ~players ~ball ~aidebug ~serverData ~camData
 		polyColor = {r = 0.0; g = 0.0; b=0.0;a= shadowIntensity };
 		polyVerts = v2s} 
 	in
-	(** This is heavily unidented... **)
+	(** This is heavily unindented... **)
 	GlDraw.line_width 2.0 ;
 	Gl.disable `texture_2d;
 	Gl.disable `depth_test;

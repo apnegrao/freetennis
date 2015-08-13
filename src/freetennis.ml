@@ -230,28 +230,6 @@ let loadTextureFromFile ~fileName ~colorKey ~handleOfTexture ~make64x64
 	~nextFreeTextureIndex
 	~textureHandles
 
-
-
-(* Generates the strings with the score information to be shown in the output *)
-let stringOfScore s  ~nextServiceIsFirst =
-    
-    let stringOfI i =
-	if i = 0 then "0"
-	else if i = 1 then "15"
-	else if i = 2 then "30"
-	else if i = 3 then "40"
-	else if i =4 then "ADV"
-	else assert(false) in
-
-    match s.sc_state  with
-	| TieBreak arr ->
-	      "Tie Break: " ^ string_of_int arr.(0) ^ " - " ^ string_of_int arr.(1) ^ if nextServiceIsFirst then "" else "    Second service"
-	| NoTieBreak n ->
-	      "games: "  ^ string_of_int n.games.(0) ^ "-" ^ string_of_int n.games.(1)
-	      ^"       " ^ stringOfI n.points.(0) ^ "-" ^ stringOfI n.points.(1)
-	      ^ if nextServiceIsFirst then "" else "    Second service"
-	      
-
 (* Checks if the service is to the right (TRUE) or to the left (FALSE) based
 on the points of the players *)
 let serviceIsToTheRight s = 
@@ -1701,7 +1679,7 @@ let _ =
 			render ~players:players ~ball:ball ~aidebug:aidebug ~serverData:serverData
 				~camData:camData ~handleOfTexture:handleOfTexture
 				~realisticParabolaOpacity:opt.opt_realisticParabolaOpacity ();
- 		        render2dStuff ~players:players ~ball:ball ~serverData:serverData 
+ 		    render2dStuff ~players:players ~ball:ball ~serverData:serverData 
 				~doNotShowPause:doNotShowPause ~pausedOnTheOtherSide:pausedOnTheOtherSide
 				~pausedWithKey:vd.vd_pausedWithKey ~noOneIsServing:noOneIsServing ~windowHt:windowHt 
 				~windowWt:windowWt ~handleOfTexture:handleOfTexture ~s:score;

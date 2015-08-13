@@ -1275,7 +1275,7 @@ let updateHumanPlayer  ~p  ~dt ~b ~opponentCurPos  ~keyboard ~mouse ~mouseSensit
 					    DiveHasNeverBeenPossible
 					else
 					    diveHasEverBeenPossible in
-				    if Sdlkey.is_key_pressed Sdlkey.KEY_q then
+				    if Sdlkey.is_key_pressed Sdlkey.KEY_e then
 					doFakeDive ~reasonForMiss:(match divePossib with 
 								       | DiveHasNeverBeenPossible  -> 
 									     DiveOnShotTooFar
