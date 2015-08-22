@@ -8,7 +8,7 @@ open BallMovement
 
 open Math
 
-open HumanPlayerModule
+open Network
 
 open Camera
 
@@ -200,7 +200,7 @@ let render2dStuff ~players ~ball ~serverData ~doNotShowPause ~pausedOnTheOtherSi
 				    GlDraw.ends ();
 				in
 				(*Render local pause*)
-				if pausedWithKey (*vd.vd_pausedWithKey*) && not !doNotShowPause then
+				if pausedWithKey (*vd.vd_pausedWithKey*) && not doNotShowPause then
 				    let wtPixmap = 196.0 
 				    and htPixmap = 39.0 in
 				    let wtScaled = wtPixmap 
@@ -214,7 +214,7 @@ let render2dStuff ~players ~ball ~serverData ~doNotShowPause ~pausedOnTheOtherSi
 				else
 				    ();
 				(*Render remote pause*)
-				if pausedOnTheOtherSide && not !doNotShowPause then
+				if pausedOnTheOtherSide && not doNotShowPause then
 				    let wtPixmap = 408.0 
 				    and htPixmap = 39.0 in
 				    let wtScaled = wtPixmap 
@@ -395,7 +395,7 @@ let render ~players ~ball ~aidebug ~serverData ~camData
 	end;
 	let p = curBallPos ball in
 	renderPolygon ball.b_shadowPolygon (Some (vec3dCreate p.x3 1.0 p.z3 ));
-	if !aidebug then
+	if aidebug then
 		( match players.(1) with
 		      | CP c ->
 			      (match c.cp_state with

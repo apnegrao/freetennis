@@ -86,9 +86,6 @@ let processKeyPressedEvents ~k (*the Key pressed *) ~vd=
 	      in
 	      { vd with vd_fullScreen = full}
 	(** Experimenting with keys**)
-	(* I have to follow an approach similar to the mouse button pressed one, because with
-	this one the player only moves WHEN (and not WHILE) the key is pressed (i.e., it moves only one unit
-	each time the key is pressed *)
 	(* Key down *)
 	else if k.keysym = Sdlkey.KEY_s then
 		let keyboard =
@@ -119,7 +116,6 @@ let processKeyPressedEvents ~k (*the Key pressed *) ~vd=
 		{vd with vd_keyboard = keyboard}
 	else
 	      vd
-
 
 let processKeyReleasedEvents ~k ~vd =
 	if k.keysym = Sdlkey.KEY_s then

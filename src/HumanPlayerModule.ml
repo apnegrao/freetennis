@@ -12,16 +12,14 @@ open Sound
 
 open Objects3D
 
+open Network
+
 (**--- Ideally, the animation module should not be needed here---**)
 open AnimationModule
 
 (** --- Consts --- **)
 
 (** --- Data Types --- **)
-(* Networking *)
-type serverData = Server of (Unix.file_descr * Unix.file_descr) * in_channel * out_channel
-		  | Client of Unix.file_descr * in_channel * out_channel
-		  | NeitherServerNorClient
 
 (** --- Functions --- **)
 let createHumanPlayer ~playsInTopmostCourtHalf ~plName ~scoreIndex ~startPos ~obLead ~obSlave=
@@ -116,7 +114,7 @@ opponentCurPos:	The current position of the computer player
 mouse:	The mouse (type mouse)
 mouseSensitivity:
 surf:	Surface
-serverData:	I'm still not sure what this is, but is an argument of type serverData (which I think is for networked games).
+serverData:	Network data.
 
 @returns:	
 *)
