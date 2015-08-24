@@ -12,6 +12,8 @@ open Network
 
 open Camera
 
+open List
+
 (** --- Consts --- **)
 let fovY = 16.9 (* increase the fov, and the upper player will be smaller with respect to the lower *)
 let zNear = 100.0
@@ -858,6 +860,264 @@ let render ~players ~ball ~aidebug ~serverData ~camData
 				    {r = 1.0; g = 1.0; b = 1.0; a = alpha}
 			    in
 
-			    renderObj3d ~o:(objOf playerToRenderLast) ~handleOfTexture ~pos:(Some (vec3dCreate x 0.0 z))
-				~flipX:(match serverData with | Client _ -> true | _  -> false) ~color;
+			    (renderObj3d ~o:(objOf playerToRenderLast) ~handleOfTexture ~pos:(Some (vec3dCreate x 0.0 z))
+				~flipX:(match serverData with | Client _ -> true | _  -> false) ~color;)
+
+			(** --- Load Textures --- **)
+let loadTextureFromExistingGdkPixBuf ~name  ~pixbuf ~colorKey
+	~handleOfTexture ~nextFreeTextureIndex ~textureHandles ~make64x64 = 
+    
+    let loadTextureFromExistingGlPix ~name ~glpix ~colorKey ~handleOfTexture
+	    ~nextFreeTextureIndex ~textureHandles =
+	if StringMap.mem name handleOfTexture then
+	    begin
+		print_endline ("texture already present: " ^ name);
+		(handleOfTexture, nextFreeTextureIndex)
+	    end
+	else
+	    let handleOfTexture' = StringMap.add name 
+		textureHandles.(nextFreeTextureIndex) handleOfTexture in
+
+	    GlTex.bind_texture ~target:`texture_2d   textureHandles.(nextFreeTextureIndex);
+
+	    
+	    GlTex.parameter     ~target:`texture_2d (`mag_filter `linear);
+	    GlTex.parameter     ~target:`texture_2d (`min_filter `linear);
+	    
+	    GlTex.image2d glpix;
+
+	    (handleOfTexture', nextFreeTextureIndex + 1 )
+
+    in
+    let glPixOfPixBuf ~pixbuf ~makeSquare64x64 = 
+	let pixbuf2 = 
+	    if not makeSquare64x64 then
+		GdkPixbuf.create ~width:(GdkPixbuf.get_width pixbuf) ~height:(GdkPixbuf.get_height pixbuf)
+		    ~has_alpha:true ()
+	    else 
+		GdkPixbuf.create ~width:64 ~height:64 ~has_alpha:true ()
+		 
+	in
+	if makeSquare64x64 then
+	    ( GdkPixbuf.fill pixbuf2 Int32.zero;
+	      GdkPixbuf.composite pixbuf ~alpha:255 ~dest:pixbuf2 ~width:64 ~height:64 ~interp:`BILINEAR)
+	else
+	    ( GdkPixbuf.fill pixbuf2 Int32.zero;
+	      GdkPixbuf.composite pixbuf ~alpha:255 ~dest:pixbuf2 ~width:(GdkPixbuf.get_width pixbuf) 
+		  ~height:(GdkPixbuf.get_height pixbuf) ~interp:`BILINEAR);
+
+
+	let src = GdkPixbuf.get_pixels pixbuf2 in
+	let raw = Raw.create `ubyte ~len:(Gpointer.length src) 
+
+	and region_of_raw raw =
+	    Gpointer.unsafe_create_region ~path:[|1|] ~get_length:Raw.byte_size raw in
+	Gpointer.blit ~src ~dst:(region_of_raw raw);
+	GlPix.of_raw raw ~format:`rgba ~width:(GdkPixbuf.get_width pixbuf2)
+	    ~height:(GdkPixbuf.get_height pixbuf2)
+	    
+    in
+    loadTextureFromExistingGlPix ~name ~glpix:(glPixOfPixBuf ~pixbuf ~makeSquare64x64:make64x64)
+	~colorKey ~handleOfTexture
+	~nextFreeTextureIndex ~textureHandles
+
+let loadTextureFromFile ~fileName ~colorKey ~handleOfTexture ~make64x64
+	~nextFreeTextureIndex ~textureHandles =
+
+    let pixbuf = GdkPixbuf.from_file fileName in
+    loadTextureFromExistingGdkPixBuf ~name:fileName ~colorKey ~make64x64
+	~pixbuf
+	~handleOfTexture
+	~nextFreeTextureIndex
+	~textureHandles
+
+let loadTextures surface =   
+			(** --- Load Textures --- **)
+	      let maxNumTextures = 1500 in
+	      let textureHandles = GlTex.gen_textures maxNumTextures in
+	      assert ( Array.length textureHandles = maxNumTextures);
+
+
+	      let handleOfTexture = StringMap.empty in
+	      let nextFreeTextureIndex = 0 in
+
+	      let surfaceFileName =
+		  match surface.s_material with
+		      | Clay ->gfxDir ^ "/terra.bmp.png"
+		      | Cement->gfxDir ^ "/cemento.bmp.png"
+		      | Grass -> gfxDir ^ "/erba.bmp.png"
+	      in
+
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadTextureFromFile ~fileName:surfaceFileName
+		      ~colorKey:false ~handleOfTexture ~make64x64:false
+		      ~nextFreeTextureIndex ~textureHandles
+	      in
+
+
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  accumulate ~f:(fun x (h, n) -> loadTextureFromFile ~make64x64:true 
+				     ~fileName:(gfxDir ^ "/n" ^ string_of_int x ^".png")
+				     ~colorKey:false ~handleOfTexture:h
+				     ~nextFreeTextureIndex:n ~textureHandles) 
+		      ~list:[0;1;2;3;4;5;6;7;8;9] ~state:(handleOfTexture, nextFreeTextureIndex) in
+
+	      
+
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  let list = 
+		      [ "0"; "15"; "30"; "40"; "adv"; "rete.bmp"; "too-late"; 
+			"fault";
+			"palla.bmp"; "croce-rossa.bmp"; "ombra-palla.bmp";
+			"sprint.bmp"; "paused"; "sprint-level"; "paused-remote"]
+		  in
+		  accumulate
+		      ~f:(fun str (h, n) -> loadTextureFromFile ~make64x64:true ~fileName:(gfxDir ^ "/" ^ str ^".png") 
+			      ~colorKey:false ~handleOfTexture:h
+			      ~nextFreeTextureIndex:n ~textureHandles)
+		      ~state:(handleOfTexture, nextFreeTextureIndex) 
+		      ~list
+	      in
+
+	      let loadAllFilesInDirAsTextures ~dir ~handleOfTexture ~nextFreeTextureIndex ~textureHandles =
+    		  let makeTextureOfFile f ( ha,nextf) =
+    		      print_endline ("makeTextureOfFile " ^ f);
+    		      loadTextureFromFile ~make64x64:true ~fileName:f ~colorKey:true
+    			  ~handleOfTexture:ha ~nextFreeTextureIndex:nextf ~textureHandles in
+		  let allFilesInDir =
+    		      let addPath l =
+			  assert (not (mem "CVS" l));	(** List.mem ?**)
+    			  List.map (fun x -> dir ^ "/" ^ x) l in
+		      let notCVS x =
+			  0 != (compare x  "CVS") in
+    		      addPath (filter notCVS  (Array.to_list (Sys.readdir dir))) in
+    		  accumulate ~list:allFilesInDir ~f:makeTextureOfFile ~state:(handleOfTexture, nextFreeTextureIndex)
+
+
+	      in
+
+
+
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Aattesa")
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Asaltello") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Adestra") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Asinistra") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Agiu") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Asu") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Adritto") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Arovescio") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Arovescioback") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Adrittoback") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Adrittov") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Adrittoallungov") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Arovesciov") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Arovescioallungov") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Arovescioforwardstretch") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Brovescioforwardstretch") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Adrittoforwardstretch") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bdrittoforwardstretch") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Aservizio") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Asmash") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+
+
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Battesa") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bsaltello") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bdestra") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bsinistra") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bgiu") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bsu") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bdritto") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Brovescio") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Brovescioback") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bdrittoback") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bdrittov") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bdrittoallungov") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Brovesciov") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Brovescioallungov") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bservizio") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+	      let (handleOfTexture, nextFreeTextureIndex) =
+		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bsmash") 
+		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+		surfaceFileName, handleOfTexture
+
+	      (* 	      Sdlttf.init(); *)
+	      (* 	      let font = Sdlttf.open_font   "/usr/share/fonts/truetype/ttf-bitstream-vera/Vera.ttf" 12 in *)
+	      (* 	      let letters = ["a";"b";"c";"d";"e";"f";"g";"h";"i";"j";"k";"l";"m";"n";"o";"p"; *)
+	      (* 			     "q";"r";"s";"t";"u";"v";"w";"x";"y";"z";"1";"2";"3";"4";"5";"6";"7"; *)
+	      (* 			     "8";"9";"0"] in *)
+	      (* 	      let createSurf l map = *)
+	      (* 		  let su = Sdlttf.render_text_solid font l (255,255,255) in *)
+	      (* 		  StringMap.add l su map in *)
+	      (* 	      let surfOfLetter = accumulate ~list:letters ~f:createSurf ~state:StringMap.empty in *)
+	      (* 	      Sdlttf.quit (); *)
 
