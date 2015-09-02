@@ -472,12 +472,13 @@ let startServiceComputer ~scoreIsEven ~h =
 
     (state,  obj, umd)
 
+(** I think this next two types are not being used, so I'm commenting it*
 type decreaseLenResult = DLR_ErrorInsufficientPowerToSurpassNet
 			 | DLR_Ok of float | DLR_ErrorCountReachedZero
 	
 
 type impactVote2 = VoteNonZero of float * volleyOrIntention 
-		  | VoteZero
+		  | VoteZero*)
 
 
 open Unix

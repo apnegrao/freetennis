@@ -997,7 +997,7 @@ let loadTextures surface =
 	      in
 
 
-
+		(** FIXME: Use recursion to do this*)
 	      let (handleOfTexture, nextFreeTextureIndex) =
 		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Aattesa")
 		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
@@ -1109,15 +1109,4 @@ let loadTextures surface =
 		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bsmash") 
 		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
 		surfaceFileName, handleOfTexture
-
-	      (* 	      Sdlttf.init(); *)
-	      (* 	      let font = Sdlttf.open_font   "/usr/share/fonts/truetype/ttf-bitstream-vera/Vera.ttf" 12 in *)
-	      (* 	      let letters = ["a";"b";"c";"d";"e";"f";"g";"h";"i";"j";"k";"l";"m";"n";"o";"p"; *)
-	      (* 			     "q";"r";"s";"t";"u";"v";"w";"x";"y";"z";"1";"2";"3";"4";"5";"6";"7"; *)
-	      (* 			     "8";"9";"0"] in *)
-	      (* 	      let createSurf l map = *)
-	      (* 		  let su = Sdlttf.render_text_solid font l (255,255,255) in *)
-	      (* 		  StringMap.add l su map in *)
-	      (* 	      let surfOfLetter = accumulate ~list:letters ~f:createSurf ~state:StringMap.empty in *)
-	      (* 	      Sdlttf.quit (); *)
 
