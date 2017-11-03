@@ -27,18 +27,15 @@
    places. If you choose to customize them, use absolute paths without
    the trailing slash. *)
 
-let sfxDir = "sfx" (* where the wav files are located.
-		      example of customization: /usr/share/freetennis/sounds *)
-
 let gfxDir = "graphics" (* where the pngs and subdirs are located. 
 			   example of customization: /usr/share/freetennis/gfx *)
-    
-
-
-
 
 
 open List
+
+open Network
+
+open Sound
 
 open Sdlevent (* for mme_xrel etc *)
 
@@ -110,50 +107,6 @@ let sprintSpeed ~beta ~speedFreeRun =
     (1.2 +. 1.16 *. abs_float (cos beta) ) *. speedFreeRun
 
 
-type soundId = SoundAhh | SoundHff | SoundNormalShot | SoundLightShot | SoundSprintCantBegin | 
-	SoundSprintJustBegun | SoundSprintJustFinished | SoundFault | SoundBounce | SoundHitNet
-	       | SoundHitBorder
-
-
-type sounds = {sou_normalShot: Sdlmixer.chunk;
-	       sou_lightShot: Sdlmixer.chunk; 
-	       sou_fault: Sdlmixer.chunk;
-	       sou_hitBorder: Sdlmixer.chunk;
-	       sou_hitNet: Sdlmixer.chunk;
-	       sou_ahh: Sdlmixer.chunk;
-	       sou_hff: Sdlmixer.chunk;
-	       sou_sprint: Sdlmixer.chunk;
-	       sou_sprintCantBeginOutOfStamina: Sdlmixer.chunk;
-	       (* sou_sprintFinishedOutOfStamina: Sdlmixer.chunk; *)
-	       sou_bounce: Sdlmixer.chunk}
-
-let playSoundId ~id ~sounds = 
-    match sounds with
-	| None -> ()
-	| Some sou ->
-	      let playSound s  = 
-		  try
-		      Sdlmixer.play_sound s
-		  with Sdlmixer.SDLmixer_exception _ -> 
-		      ()
-	      in
-	      match id with
-		  | SoundNormalShot -> playSound sou.sou_normalShot 
-		  | SoundHff -> playSound sou.sou_hff 
-		  | SoundSprintJustBegun -> playSound sou.sou_sprint 
-		  | SoundSprintCantBegin ->
-			playSound sou.sou_sprintCantBeginOutOfStamina 
-		  | SoundSprintJustFinished -> playSound sou.sou_sprintCantBeginOutOfStamina 
-		  | SoundAhh -> playSound sou.sou_ahh 
-		  | SoundLightShot -> playSound sou.sou_lightShot 
-		  | SoundFault -> playSound sou.sou_fault
-		  | SoundBounce -> playSound sou.sou_bounce
-		  | SoundHitNet -> playSound sou.sou_hitNet
-		  | SoundHitBorder -> playSound sou.sou_hitBorder
-
-
-
-
 let mouseRefresh = 1.0 /. 24.0 (* seconds *)
 
 (* the time from when the ball is hit to when the player realizes its
@@ -169,7 +122,6 @@ let mouseRefresh = 1.0 /. 24.0 (* seconds *)
 *)
 let reflexDeltaT = 0.0
 
-exception CouldNotConnectToServer
 exception TheAngleAlongXIsTooCloseToPi2
 exception NullVector
 exception EmptyList
@@ -2331,10 +2283,6 @@ let setAnim ~animName  ~o ~restartIfSameAnimation =
 
 
 
-
-type serverData = Server of (Unix.file_descr * Unix.file_descr) * in_channel * out_channel
-		  | Client of Unix.file_descr * in_channel * out_channel
-		  | NeitherServerNorClient
 
 let startServiceHuman ~scoreIsEven ~h ~serverData = 
 
@@ -6685,47 +6633,8 @@ let _ =
 	| ArgumentError e -> 
 	      print_endline ( e)
 	| ArgumentsOk opt ->
-
-
-	      let serverData =
-		  let rec tryToConnectNTimes n ~soc ~inet_a ~port=
-		      try
-			  Unix.connect  soc (Unix.ADDR_INET  (inet_a, port) )
-		      with Unix.Unix_error _ ->
-			  if n = 0 then
-			      raise CouldNotConnectToServer
-			  else
-			      ( print_endline ( "The server is down. Retrying " ^ string_of_int (n-1) ^ " times.");
-				Unix.sleep 1;
-				tryToConnectNTimes (n-1) ~soc ~inet_a ~port )
-		  in
-		  if !server  then
-		      let soc = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
-		      ( 
-			  Unix.setsockopt soc SO_REUSEADDR true;
-			  (try
-			       Unix.bind soc (Unix.ADDR_INET (Unix.inet_addr_any, !port))
-			   with Unix.Unix_error (err, _, _) ->
-			       (print_endline ("Error: " ^(Unix.error_message err) ^ ". This is a known bug. Please wait a few seconds or simply change the port number with the -port option");
-				exit 0 ));
-			  Unix.listen soc 5;
-			  print_endline "waiting for client to connect...";
-			  let clientSocket, _ = Unix.accept soc in
-			  Server ( (soc, clientSocket), Unix.in_channel_of_descr clientSocket, Unix.out_channel_of_descr clientSocket)
-		      )
-
-		  else  if 0 != compare !client  ""  then
-		      let soc = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
-		      let inet_a = Unix.inet_addr_of_string !client in
-		      print_endline "Connecting to server...";
-		      ( tryToConnectNTimes 60 ~soc ~inet_a ~port:!port;
-			print_endline "Connected to server";
-			Client (soc, Unix.in_channel_of_descr  soc, Unix.out_channel_of_descr soc) )
-		  else
-		      NeitherServerNorClient
-	      in
-
-
+	      let serverData = Network.setupNetwork server client port
+        in
 	      (match serverData with
 		   | Server (_, _, out) ->
 			 (
@@ -6776,32 +6685,13 @@ let _ =
 						       | Cement -> 1.5 (*1.6 *))} in 
 		  surfOfMaterial opt.opt_surface in
 	      Sdl.init [`EVERYTHING]; 
-	      if opt.opt_noSound then 
-		  () 
-	      else
-		  Sdlmixer.open_audio ();
 	      
-	      let sounds = 
-		  if opt.opt_noSound then
+	    let sounds = 
+		    if opt.opt_noSound then
 		      None
-		  else
-		      ( 		  
-			  let stam =  Sdlmixer.loadWAV (sfxDir ^ "/fh2.wav") in
-			  Sdlmixer.setvolume_chunk stam 4.0 ;
-
-			  Some {sou_normalShot = Sdlmixer.loadWAV (sfxDir ^ "/colpo.wav");
-				sou_bounce = Sdlmixer.loadWAV (sfxDir ^ "/palla leggera.wav");
-				sou_hitNet = Sdlmixer.loadWAV (sfxDir ^ "/rete.wav");
-				sou_hitBorder = Sdlmixer.loadWAV (sfxDir ^ "/muro2.wav");
-				sou_fault = Sdlmixer.loadWAV (sfxDir ^ "/out.wav");
-				sou_lightShot = Sdlmixer.loadWAV (sfxDir ^ "/fh.wav");
-				sou_hff = Sdlmixer.loadWAV (sfxDir ^ "/hff.wav");
-				sou_sprint = Sdlmixer.loadWAV (sfxDir ^ "/contrazione2.wav");
-				sou_sprintCantBeginOutOfStamina = stam;
-				sou_ahh = Sdlmixer.loadWAV (sfxDir ^ "/Ahh.wav") } 
-		      )
+		    else
+          Sound.loadSounds
 	      in
-
 
 	      Sdlgl.set_attr [Sdlgl.DOUBLEBUFFER true; Sdlgl.DEPTH_SIZE 16]  ;
 

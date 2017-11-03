@@ -1,7 +1,7 @@
 # add -noassert for speedup
 SYSLIBS = -I +camlimages -I +lablGL -I +lablgtk2 -I +sdl
 OCAMLLIBS = bigarray.cmxa sdl.cmxa lablgtk.cmxa lablgl.cmxa sdlmixer.cmxa sdlttf.cmxa unix.cmxa
-SOURCES = freetennis.ml
+SOURCES = Sound.ml Network.ml freetennis.ml
 TARGET = freetennis
 all: freetennis clean
 
