@@ -20,17 +20,6 @@
    USA
 *)
 
-
-
-(* Packagers can customize these strings if they want to install the
-   executable and the graphics/sound directories in different
-   places. If you choose to customize them, use absolute paths without
-   the trailing slash. *)
-
-let gfxDir = "graphics" (* where the pngs and subdirs are located. 
-			   example of customization: /usr/share/freetennis/gfx *)
-
-
 open List
 
 open Network
@@ -41,69 +30,9 @@ open Input
 
 open Math
 
+open SharedData
+
 open Sdlevent (* for mme_xrel etc *)
-
-(* "accumulate l f state" invokes f on each element of l, but
-   threading a state. This means that
-
-   f x state
-
-   is called for each x in l, but each time with the state produced
-   by the previous call.
-
-   Example:
-
-   accumulate [1;2;4] f initial_state
-
-   means
-
-   let st2 =
-       let st1 = f 1 initial_state in
-       f 2 st1 in
-   f 4 st2
-
-*)
-let rec accumulate ~list ~f ~state =
-    match list with
-	    [] -> state
-	| h::t -> 
-	      let state' = f h state 
-	      in
-	      accumulate ~list:t ~f:f ~state:state'
-
-let rec allPairs x y = 
-    match x with
-	| [] -> []
-	| x1::xt -> 
-	      let x1y = List.map (fun k -> (x1, k)) y in
-	      List.append x1y (allPairs xt y)
-
-
-
-let exists l p =
-    let fil = List.filter p l in
-    length fil != 0
-
-
-let pick l p = 
-    let fil = List.filter p l in
-    match fil with
-	| [] -> None
-	| h::_ -> Some h
-
-let rec select_some l = 
-    match l with 
-	| [] -> []
-	| Some x :: xs -> x :: select_some xs
-	| None :: xs -> select_some xs 
-
-
-let numOf l f = 
-    length (List.filter f l)
-
-let printList l f = 
-    List.iter (fun x -> print_endline (f x)) l
-
 
 let sprintSpeed ~beta ~speedFreeRun =
     (* the sprint speed is 1.2 *. normal speed if you are moving horizontally,
@@ -125,75 +54,19 @@ let sprintSpeed ~beta ~speedFreeRun =
 let reflexDeltaT = 0.0
 
 exception TheAngleAlongXIsTooCloseToPi2
-exception EmptyList
 exception MistakeWithUncertainPhysicalMeaning
 exception HotSpotNotFound
 exception ThereIsNoImpactFrameInThisAnim
 exception NotImplemented
 
-let rec findBestElement l  better = 
-    match l with
-	| [] -> raise EmptyList
-	| [x] -> x
-	| h::t -> better h (findBestElement t better)
-
-
 let shadowIntensity = 0.2
 
 let sizeOfAPixelInCm = (* ony for some animation frames *) 1.72 
-
-let g = -. 980.0 (* points towards the ground *)
-
-let netHtCenter = 91.4
-
-let netHtBorder = 107.0
-
-
-let courtWt = 823.0
-let courtWt2 = courtWt /. 2.0
-let courtWt4 = courtWt /. 4.0
-
-let courtWtDoubles = 1097.3
-
-let corridorWt = (courtWtDoubles -. courtWt ) *. 0.5
-let corridorWt2 = corridorWt *. 0.5
-
-let courtHt = 2377.4
-
-let courtHt2 = courtHt *. 0.5 (* 1188.7 *)
-
-let courtHt4 = courtHt *. 0.25 (* 594.35 *)
-
-let leftBound = -. courtWt2 -. corridorWt2 -. 580.0
-
-let upperBound = -. courtHt2 -. 1100.0
-
-let rightBound = -. leftBound
-
-let lowerBound = -. upperBound
-
-let distanceFromPolesToExternalBorder = 91.4
-
-let leftPoleX = -. courtWt2  -. distanceFromPolesToExternalBorder
-
-let rightPoleX = courtWt2  +. distanceFromPolesToExternalBorder
-
-let netHtAtX x = 
-    let x = abs_float x in
-    if x < rightPoleX then
-	let t = (netHtBorder -. netHtCenter) /. rightPoleX in
-	netHtCenter +. t *. x
-    else
-	0.0
-
 
 let spinForVolee = -. 2.0 (* @@ discover why 0.0 crashes when I do volee *)
 
 type playerName = Pete | Mats | Ivan 
 
-(* e.g. listFromTo 0 5 = [0; 1; 2; 3; 4]. 5 is NOT present. *)
-let rec listFromTo a b =
-    if a >= b then [] else a::listFromTo (a+1) b 
 
 let calcMinShotPower ~ballVelZ ~exploit = 
     (* determines how easy drop volley is. with 1.4 it is almost impossible *)
@@ -203,46 +76,6 @@ let calcMinShotPower ~ballVelZ ~exploit =
 let powerAttenuationForVolee = 0.55
 
 let powerAttenuationForStretchForwardAndDive = 0.5
-
-type rectangleTheShotIsMeantToFallIn = { 
-    rtsimtfi_top : float;
-    rtsimtfi_bottom : float;
-    rtsimtfi_left : float;
-    rtsimtfi_right : float }
-
-let tol = 5.0 (* cm of tolerance due to the fact that the ball is not a point object, so when it bounces outside it can touch the line *)
-
-let upperHalfOfCourt = {rtsimtfi_top = -. courtHt2 -. tol;
-			rtsimtfi_bottom = 0.0;
-			rtsimtfi_left = -. courtWt2 -. tol;
-			rtsimtfi_right = courtWt2 +. tol
-		       }
-let lowerHalfOfCourt = {rtsimtfi_top = 0.0;
-			rtsimtfi_bottom = courtHt2 +. tol;
-			rtsimtfi_left = -. courtWt2 -. tol;
-			rtsimtfi_right = courtWt2 +. tol
-		       }
-
-let servizioInAltoSulPari  = {rtsimtfi_top = -. courtHt4 -. tol;
-			      rtsimtfi_bottom = 0.0 +. tol;
-			      rtsimtfi_left = -. courtWt2 -. tol;
-			      rtsimtfi_right = 0.0
-			     } 
-let servizioInAltoSulDispari  = {rtsimtfi_top = -. courtHt4 -. tol;
-				 rtsimtfi_bottom = 0.0 ;
-				 rtsimtfi_left = 0.0;
-				 rtsimtfi_right = courtWt2 +. tol
-				} 
-let servizioInBassoSulPari  = {rtsimtfi_top = 0.0;
-			       rtsimtfi_bottom = courtHt4 +. tol;
-			       rtsimtfi_left = 0.0;
-			       rtsimtfi_right = courtWt2 +. tol
-			      } 
-let servizioInBassoSulDispari  = {rtsimtfi_top = 0.0;
-				  rtsimtfi_bottom = courtHt4 +. tol;
-				  rtsimtfi_left = -. courtWt2 -. tol;
-				  rtsimtfi_right = 0.0
-				 } 
 
 type trajectory = {impact:vec3d ; startVel:vec3d ; spin:vec3d  ;
 		   targetRect:rectangleTheShotIsMeantToFallIn option }
@@ -489,12 +322,6 @@ let curBallVel bsm =
 	(bsm.bsm_trajectory.startVel.y3 +. bsm.bsm_curTimer *. (-. bsm.bsm_trajectory.spin.y3 -. abs_float g))
 	(bsm.bsm_trajectory.startVel.z3 -. bsm.bsm_curTimer *. bsm.bsm_trajectory.spin.z3)
 
-	
-	
-
-type animState = Animated of float | NotAnimated | PausedDuringService
-
-
 
 let renderPolygon p maybePos = 
     if not p.polyVisible then
@@ -530,53 +357,11 @@ let renderPolygon p maybePos =
 	end
 
 
-type animFrame = { animFrameDuration:float (*seconds *);
-		   animFrameTexture: string; animFrameHotSpot:vec2d;
-		   animFrameDimensionsOfRect:vec2d (* in pixels *)}
-
-
-(* "bool StringMap.t" is a map  string -> bool *)
-module StringMap = Map.Make (String)
-
 (* "bool IntMap.t" is a map  int -> bool *)
 module IntMap = Map.Make (struct
 			      type t = int
 			      let compare = compare
 			  end )
-
-
-
-type leftOrRight = Right | Left
-
-let oppositeDir d = match d with Right -> Left | Left -> Right
-
-module DirectionMap = Map.Make (struct
-				    type t = leftOrRight
-
-				    let compare x y =
-					match x with 
-					    | Left ->
-						  (match y with
-						       | Left -> 0
-						       | Right -> -1 )
-					    | Right ->
-						  (match y with
-						       | Left -> 1
-						       | Right -> 0 )
-				end )
-
-type serviceAnim = {serviceAnim_FrameOfBallLaunch:int;
-		    serviceAnim_FrameOfImpact:int; 
-		    serviceAnim_TimeFromLaunchToImpact:float;
-		    serviceAnim_ArrayOfFrames: animFrame array}
-
-type shotAnim = {shotAnim_ArrayOfFrames: animFrame array;
-		 shotAnim_FrameOfImpact: int;
-		 shotAnim_TimeFromOpeningToImpact: float}
-
-type animation = ServiceAnimation of serviceAnim
-		 | RunAnimation of  animFrame array
-		 | ShotAnimation of shotAnim 
 
 type obj3d = { o3d_curFrameIdx:int ; 
 	       o3d_curAnimName:string;
@@ -980,16 +765,6 @@ let calculateCamera ~fovy ~fovx ~znear ~posBottomPlayer ~posTopmostPlayer ~delta
     { eyeX = eyeX; eyeY = eyeY; eyeZ = eyeZ; lookatX = lookatX; lookatY
 	  = 0.0; lookatZ = lookatZ}  
 
-
-
-
-
-type material = Cement | Grass | Clay
-
-type surface = {s_material:material;
-		s_spinAttenuationFactor:float;
-		s_velXZAttenuationFactor:float;
-		s_velYAttenuationFactor:float}
 
 type infoAboutTrajArrival = {iata_x:float; iata_t:float}
 
