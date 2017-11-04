@@ -37,6 +37,8 @@ open Network
 
 open Sound
 
+open Input
+
 open Sdlevent (* for mme_xrel etc *)
 
 (* "accumulate l f state" invokes f on each element of l, but
@@ -106,8 +108,6 @@ let sprintSpeed ~beta ~speedFreeRun =
        plus a bonus if you are moving vertically . *)
     (1.2 +. 1.16 *. abs_float (cos beta) ) *. speedFreeRun
 
-
-let mouseRefresh = 1.0 /. 24.0 (* seconds *)
 
 (* the time from when the ball is hit to when the player realizes its
    direction. Is of crucial importance for passing shot tuning 
@@ -239,12 +239,6 @@ let dotProduct3d v1 v2 =
 
 let dotProduct2d v1 v2 = 
     v1.x2 *. v2.x2 +. v1.z2 *. v2.z2
-
-
-type mouse = {m_rightButtonPressed:bool; m_leftButtonPressed:bool ;
-	      m_xRel:int; 
-	      m_yRel:int; 
-	      m_secondsSinceLastMouseMotion: float}
 
 
 (* e.g. listFromTo 0 5 = [0; 1; 2; 3; 4]. 5 is NOT present. *)
@@ -6531,11 +6525,6 @@ type argumentResult = ArgumentError of string | ArgumentsOk of options
 
 open Unix
 
-
-type varData = { vd_mouse:mouse; vd_windowWt:int; vd_windowHt:int;
-		 vd_pausedWithKey:bool;vd_slowMotionFactor:float;
-		 vd_fullScreen:bool; vd_deltaCamera:float; vd_mustQuit:bool}
-
 let _ = 
     let defaultComputerSkill = 190 
     and defaultPort = 4000 in
@@ -6701,7 +6690,7 @@ let _ =
 		      li
 		  in
 		  Sdlvideo.set_video_mode ~w:windowWt ~h:windowHt ~bpp:0 listOfFlags in
-	      Sdlwm.set_caption ~title:"Loading... please wait" ~icon:"Free Tennis";
+	      Sdlwm.set_caption ~title:loadingString ~icon:freeTennisString;
 
 	      Sdlwm.set_icon (Sdlvideo.load_BMP ( gfxDir ^ "/ball-caption.bmp"));
 
@@ -7429,17 +7418,14 @@ let _ =
 		    b_shadowPolygon = polyBallShadow;
 		    b_siolpwhtb = 0 }in
 	      
-
-
-	      let pressGMessage = "Press F or G to grab the mouse input. Read the manual for more info! :-)" 
-	      and freeTennisString = "Free Tennis" in
 	      Sdlwm.set_caption ~title:pressGMessage ~icon:freeTennisString;
 
 
-
+        (** Main loop starts here! **)
 	      let rec mainLoop ~players ~ball ~score ~timer ~nextServiceIsFirst   ~vd =
 
-		  
+		  (** Processes the queue of pending IO (mostly mouse and key) events **)
+      (** This could be put on a different file, right? **)
 		  let rec manageAllPendingSdlEvents vd =
 
 		      let nextEvent = Sdlevent.poll () in
