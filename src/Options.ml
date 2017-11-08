@@ -12,7 +12,12 @@ type options =
   opt_skillLevel: float;
   opt_noSound:bool;
   opt_realisticParabolaOpacity:bool;
-  opt_surface : material }
+  opt_surface : material;
+  opt_resX : int;
+  opt_resY : int;
+  opt_aidebug : bool;
+  opt_doNotShowPause : bool;
+  opt_showFps : bool }
 
 type argumentResult = ArgumentError of string | ArgumentsOk of options
 
@@ -102,11 +107,15 @@ let parseOptions=
 					      ArgumentError ("computer-skill is invalid")
 					  else
 					      ArgumentsOk {opt_p0 = p0;
-							   opt_p1 = p1;
-							   opt_realisticParabolaOpacity = !realisticPar;
-							   
-							   opt_skillLevel = float_of_int !computerSkill;
-							   opt_noSound = !noSound;
-							   opt_surface = su}
+							    opt_p1 = p1;
+ 		              opt_realisticParabolaOpacity = !realisticPar;
+							    opt_skillLevel = float_of_int !computerSkill;
+							    opt_noSound = !noSound;
+							    opt_surface = su;
+                  opt_resX = !resX;
+                  opt_resY = !resY;
+                  opt_aidebug = !aidebug;
+                  opt_doNotShowPause = !doNotShowPause;
+                  opt_showFps = !showFps }
     in
     (parsedOptions, server, port, client)

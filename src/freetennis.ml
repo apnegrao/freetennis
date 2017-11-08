@@ -4902,9 +4902,8 @@ let _ =
 				  opt_surface = su}
 	      in
 
-
-	      let windowWt =  !resX in
-	      let windowHt =  !resY in
+	      let windowWt =  opt.opt_resX in
+	      let windowHt =  opt.opt_resY in
 	      let mouseSensitivity = 120.0  in
 	      let xCamBehav = PushScroll in
 	      let fovY = 16.9 (* increase the fov, and the upper player will be smaller with respect to the lower *)in
@@ -5958,7 +5957,7 @@ let _ =
 							     ~opponentCurPos:(curPosOfPlayer players.(1)) 
 							     ~mouse:vd.vd_mouse ~mouseSensitivity ~surf:surface  
 						   | CP c ->
-							 updateComputerPlayer ~p:c ~dt ~b:ball ~opt ~aidebug:!aidebug
+							 updateComputerPlayer ~p:c ~dt ~b:ball ~opt ~aidebug:opt.opt_aidebug
 							     ~opponentCurPos:(curPosOfPlayer players.(1)) ~surf:surface
 							     ~nextServiceIsFirst
 							     ~opponentLock:(lockOf players.(1)) ~mouse:vd.vd_mouse ~sounds )
@@ -5984,7 +5983,7 @@ let _ =
 							      ~opponentCurPos:(curPosOfPlayer players.(0)) ~serverData
 							      ~mouse:newmouse ~mouseSensitivity ~surf:surface 
 						    | CP c ->
-							  updateComputerPlayer ~p:c ~dt ~b:newball ~opt ~aidebug:!aidebug
+							  updateComputerPlayer ~p:c ~dt ~b:newball ~opt ~aidebug:opt.opt_aidebug
 							      ~opponentCurPos:(curPosOfPlayer players.(0)) ~surf:surface
 							      ~nextServiceIsFirst
 							      ~opponentLock:(lockOf players.(0)) ~mouse:newmouse ~sounds)
@@ -6093,7 +6092,7 @@ let _ =
 			    let p = curBallPos ball in
 			    renderPolygon ball.b_shadowPolygon (Some (vec3dCreate p.x3 1.0 p.z3 ));
 
-			    if !aidebug then
+			    if opt.opt_aidebug then
 				( match players.(1) with
 				      | CP c ->
 					      (match c.cp_state with
@@ -6747,7 +6746,7 @@ let _ =
 
 
 				in
-				if vd.vd_pausedWithKey && not !doNotShowPause then
+				if vd.vd_pausedWithKey && not opt.opt_doNotShowPause then
 				    let wtPixmap = 196.0 
 				    and htPixmap = 39.0 in
 				    let wtScaled = wtPixmap 
@@ -6761,7 +6760,7 @@ let _ =
 				else
 				    ();
 
-				if pausedOnTheOtherSide && not !doNotShowPause then
+				if pausedOnTheOtherSide && not opt.opt_doNotShowPause then
 				    let wtPixmap = 408.0 
 				    and htPixmap = 39.0 in
 				    let wtScaled = wtPixmap 
@@ -6835,7 +6834,7 @@ let _ =
 			Sdlgl.swap_buffers ();
 
 
-			if !showFps  then
+			if opt.opt_showFps then
 			    match timer with
 				| TimerData0 -> ()
 				| TimerData1 _ -> ()
