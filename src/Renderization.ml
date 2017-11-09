@@ -326,56 +326,46 @@ let render ~players ~ball ~aidebug ~serverData ~camData
 
 	      let xrepeat = 20.0 
 	      and yrepeat = 4.0 in
-	      let v1 = [ vertexCreate
-			     (-. distanceFromPolesToExternalBorder -. courtWt2)
+	      let v1 = [ vertexCreate (-. distanceFromPolesToExternalBorder -. courtWt2)
 			     netHtBorder 0.0 0.0 0.0;
-
-			 vertexCreate 0.0 netHtCenter 0.0 xrepeat 0.0;
-
-			 vertexCreate 0.0 0.0 0.0 xrepeat yrepeat;
-
-			 vertexCreate
-			     (-.distanceFromPolesToExternalBorder -. courtWt2) 0.0 0.0 0.0 yrepeat ] in
-
+    			 vertexCreate 0.0 netHtCenter 0.0 xrepeat 0.0;
+    			 vertexCreate 0.0 0.0 0.0 xrepeat yrepeat;
+    			 vertexCreate (-.distanceFromPolesToExternalBorder -. courtWt2) 0.0 0.0 0.0 yrepeat ]
+        in
         let offx = 40.0 in
-
-	      let v1s = [ vertexCreate
-			      ((-. distanceFromPolesToExternalBorder -. courtWt2) +. offx)
-
+	      let v1s = [ vertexCreate ((-. distanceFromPolesToExternalBorder -. courtWt2) +. offx)
 			      0.1   (2.0 *. netHtBorder) 0.0 0.0;
-
-			  vertexCreate offx 0.1 (2.0 *. netHtCenter) xrepeat 0.0;
-
-			  vertexCreate 0.0 0.1 0.0 xrepeat yrepeat;
-
-			  vertexCreate
-			      (-.distanceFromPolesToExternalBorder -. courtWt2) 0.1 0.0 0.0 yrepeat ] in
-
+    			  vertexCreate offx 0.1 (2.0 *. netHtCenter) xrepeat 0.0;
+    			  vertexCreate 0.0 0.1 0.0 xrepeat yrepeat;
+      		  vertexCreate (-.distanceFromPolesToExternalBorder -. courtWt2) 0.1 0.0 0.0 yrepeat ] 
+        in
 	      let polyNet1 = { polyVerts = v1 ;
-			       
 			       polyTextureHandle = (StringMap.find  (gfxDir ^ "/rete.bmp.png") handleOfTexture);
 			       polyColor = {r = 1.0; g = 1.0; b=1.0;a= 0.6};
-			       polyVisible = true} in
+			       polyVisible = true} 
+        in
 	      let polyNet1Shad = {polyNet1 with
  				      polyColor = {r = 0.0; g = 0.0; b=0.0;a= shadowIntensity };
-				      polyVerts = v1s} in
-
+				      polyVerts = v1s}
+        in
 	      let v2 = [ vertexCreate 0.0 netHtCenter 0.0 0.0 0.0;
-			 vertexCreate (distanceFromPolesToExternalBorder +. courtWt2)
-			     netHtBorder 0.0 xrepeat 0.0;
-			 vertexCreate (distanceFromPolesToExternalBorder +. courtWt2)
-			     0.0 0.0 xrepeat 5.0;
-			 vertexCreate 0.0 0.0 0.0 0.0 5.0] 
+	    		 vertexCreate (distanceFromPolesToExternalBorder +. courtWt2)
+			       netHtBorder 0.0 xrepeat 0.0;
+			     vertexCreate (distanceFromPolesToExternalBorder +. courtWt2)
+			        0.0 0.0 xrepeat 5.0;
+			     vertexCreate 0.0 0.0 0.0 0.0 5.0] 
 	      and v2s = [ vertexCreate offx 0.1 (2.0 *. netHtCenter)   0.0 0.0;
 			  vertexCreate (offx +. (distanceFromPolesToExternalBorder +. courtWt2)) 0.1 (2.0 *. netHtBorder) xrepeat 0.0;
 			  vertexCreate (distanceFromPolesToExternalBorder +. courtWt2) 0.1 0.0 xrepeat yrepeat;
-			  vertexCreate 0.0 0.1 0.0 0.0 yrepeat] in
-
+			  vertexCreate 0.0 0.1 0.0 0.0 yrepeat]
+        in
         let polyNet2 = { polyNet1 with polyVerts =v2 } in
 	      let polyNet2Shad = {polyNet2 with
  				      polyColor = {r = 0.0; g = 0.0; b=0.0;a= shadowIntensity };
-				      polyVerts = v2s} in
+				      polyVerts = v2s}
+        in
 
+          GlDraw.line_width 2.0;
 			    Gl.disable `texture_2d;
 			    Gl.disable `depth_test;
 			    GlDraw.begins `line_strip;

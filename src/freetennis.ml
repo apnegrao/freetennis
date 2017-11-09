@@ -5943,7 +5943,7 @@ let _ =
 			    render2dStuff ~players:players ~ball:ball ~serverData:serverData 
                       ~doNotShowPause:opt.opt_doNotShowPause ~pausedOnTheOtherSide:pausedOnTheOtherSide
                       ~pausedWithKey:vd.vd_pausedWithKey  ~noOneIsServing:noOneIsServing  ~windowHt:windowHt
-                      ~windowWt:windowWt ~handleOfTexture:handleOfTexture score;
+                      ~windowWt:windowWt ~handleOfTexture:handleOfTexture ~s:score;
 			    Gl.flush ();
 
 
