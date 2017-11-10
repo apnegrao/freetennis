@@ -353,4 +353,30 @@ let whenWillTheBallArriveAtZ  ~z ~s ~surf =
 						   iaba_whatYItWillHave = yTarg;
 						   iaba_ballVelWhenItArrives = vec3dSub newTraj.startVel (vec3dMulScalar tArrive2  newTraj.spin )}
 
+let createRunningBall ~traj ~scoreIndexOfLastPlayerWhoHit ~polyBall
+	~polyRedCross ~polyShadow ~service =
 
+
+    assert(traj.impact.y3 > 0.0); 
+
+    let bsm = 
+
+	let bo =  whenWillItBounce traj in
+	let ne =   whenWillTheTrajectoryHitTheNet traj  in
+
+	{ bsm_trajectory = traj;
+	  bsm_isItGoodSoFar = true;
+	  bsm_curTimer = 0.0;
+	  bsm_lastShotWasAService = service;
+	  bsm_whenWillItBounce = bo;
+	  bsm_whenWillHitTheNet = ne;
+	  bsm_bouncesSoFar = 0;
+	} 
+    in
+    
+    { b_state = BS_Moving bsm;
+      b_polygon = polyBall;
+      b_redCrossPolygon = polyRedCross;
+      b_shadowPolygon = polyShadow;
+
+      b_siolpwhtb = scoreIndexOfLastPlayerWhoHit}
