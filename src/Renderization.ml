@@ -972,7 +972,7 @@ let loadTextures surface =
 	      let handleOfTexture = StringMap.empty in
 	      let nextFreeTextureIndex = 0 in
 
-	      let nomeFileCampo =
+	      let surfaceFileName =
 		  match surface.s_material with
 		      | Clay ->gfxDir ^ "/terra.bmp.png"
 		      | Cement->gfxDir ^ "/cemento.bmp.png"
@@ -980,7 +980,7 @@ let loadTextures surface =
 	      in
 
 	      let (handleOfTexture, nextFreeTextureIndex) =
-		  loadTextureFromFile ~fileName:nomeFileCampo
+		  loadTextureFromFile ~fileName:surfaceFileName
 		      ~colorKey:false ~handleOfTexture ~make64x64:false
 		      ~nextFreeTextureIndex ~textureHandles
 	      in
@@ -1139,4 +1139,4 @@ let loadTextures surface =
 	      let (handleOfTexture, nextFreeTextureIndex) =
 		  loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bsmash") 
 		      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-    	nomeFileCampo, handleOfTexture
+    	surfaceFileName, handleOfTexture

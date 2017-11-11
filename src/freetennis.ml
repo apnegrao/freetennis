@@ -157,7 +157,7 @@ let updateTimer  ~tim ~slowMotionFactor=
 			  )
 		  }
 		      
-
+(* XXX: It think this is unused *)
 let stringOfScore s  ~nextServiceIsFirst =
     
     let stringOfI i =
@@ -176,7 +176,8 @@ let stringOfScore s  ~nextServiceIsFirst =
 	      ^"       " ^ stringOfI n.points.(0) ^ "-" ^ stringOfI n.points.(1)
 	      ^ if nextServiceIsFirst then "" else "    Second service"
 	      
-
+(* Checks if the service is to the right (TRUE) or to the left (FALSE) based
+on the points of the players *)
 let serviceIsToTheRight s = 
     let p1, p2 = 
 	match s.sc_state with
@@ -185,15 +186,28 @@ let serviceIsToTheRight s =
     in
     (( p1 + p2) mod 2) = 0
 	    
+(* I haven't quite figured out what this is used for, but in non-networked games,
+the human player has scoreIndex = 0 and the computer player has scoreIndex = 1 *)
 let scoreIndex p = 
     match p with
 	| HP h -> h.hp_scoreIndex
 	| CP c -> c.cp_scoreIndex
 
-
+(*
+Let's see what this method actually does.
+b:	The ball (type ball)
+dt:	Seconds since last frame (see calcDt)
+score:	The score (type score)
+surf:	Surface
+sounds:	The sounds to be played during the game (type sounds)
+nextServiceIsFirst:	A boolean indicating if the next service is a first service
+opt:	I'm not sure what this is and I think it isn't used. By the name I'd guess this is the 'options' data type
+players:	The players array
+@returns:	A tuple (score, ball, nextServiceIsFirst, players)
+*)
 let updateBall ~b ~dt ~score ~surf ~sounds ~nextServiceIsFirst ~opt ~players = 
 
-    let letComputerKnowHeWon ~p ~siolpwhtb ~players= 
+    let letComputerKnowHeWon ~p ~siolpwhtb (* scoreIndexOfLastPlayerWhoHitTheBall *) ~players= 
 	match p with 
 	    | CP c ->
 		  if c.cp_scoreIndex = siolpwhtb then
@@ -450,6 +464,7 @@ let updateBall ~b ~dt ~score ~surf ~sounds ~nextServiceIsFirst ~opt ~players =
 					    (score, b, nextServiceIsFirst, newPlayers0)
 
 
+(* TODO: Move to ComputerPlayerModule *)
 let startServiceComputer ~scoreIsEven ~h = 
     
     let dirsign = if h.cp_playsInTopmostCourtHalf then -. 1.0 else 1.0 in
@@ -471,7 +486,7 @@ let startServiceComputer ~scoreIsEven ~h =
 
     (state,  obj, umd)
 
-
+(* XXX: I don't think these next two types are being used *)
 type decreaseLenResult = DLR_ErrorInsufficientPowerToSurpassNet
 			 | DLR_Ok of float | DLR_ErrorCountReachedZero
 	
@@ -519,7 +534,7 @@ let _ =
 
 	      let windowWt =  opt.opt_resX in
 	      let windowHt =  opt.opt_resY in
-	      let mouseSensitivity = 120.0  in
+	      let mouseSensitivity = 120.0 in (* TODO: move to Input or Options *)
 	      let xCamBehav = PushScroll in
 	      let surface =
 		  let surfOfMaterial m =
@@ -562,7 +577,7 @@ let _ =
 
 	      
 	      
-
+        (* XXX: Not sure what this code does *)
 	      GlDraw.shade_model `smooth;
 	      let co = 
 		  match surface.s_material with
@@ -600,7 +615,7 @@ let _ =
 	      
 	      let windowWt, windowHt = resizeCallback windowWt windowHt in
         (*Load textures*)
-        let nomeFileCampo, handleOfTexture = Renderization.loadTextures surface in
+        let surfaceFileName, handleOfTexture = Renderization.loadTextures surface in
 
 
 	      (* 	      Sdlttf.init(); *)
@@ -631,7 +646,7 @@ let _ =
 				vertexCreate rightBound 0.0 lowerBound xrepeat yrepeat;
 				vertexCreate leftBound 0.0 lowerBound 0.0 yrepeat ] in
 		  {polyVerts = verts ;
-		   polyTextureHandle = StringMap.find nomeFileCampo handleOfTexture;
+		   polyTextureHandle = StringMap.find surfaceFileName handleOfTexture;
 		   polyColor = {r = 1.0; g = 1.0; b=1.0;a=1.0};
 		   polyVisible = true }in
 

@@ -1664,14 +1664,14 @@ let updateComputerPlayer  ~p ~dt ~b ~opponentCurPos ~surf ~opponentLock ~mouse ~
 				let rett =
 				    if not p.cp_playsInTopmostCourtHalf then
 					if right then
-					    servizioInAltoSulPari
+					    upperLeftServiceBox
 					else
-                                            servizioInAltoSulDispari
+                                            upperRightServiceBox
 				    else
 					if right then
-					    servizioInBassoSulPari
+					    lowerLeftServiceBox
 					else
-					    servizioInBassoSulDispari in
+					    lowerRightServiceBox in
 
 				let heights = List.map (fun x -> float_of_int x) (listFromTo 270 310) in
 				let goodHeights = 

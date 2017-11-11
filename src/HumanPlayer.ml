@@ -553,7 +553,10 @@ let updateHumanPlayer  ~p  ~dt ~b ~opponentCurPos  ~mouse ~mouseSensitivity ~sur
     in (* end createStateASBO *)
     
     
-
+(** I think the functions so far serve to calculate the initial trajectory of the ball
+	(i.e., before the user's input is taken into account. Based on its name, this next one
+	seems to be the one that adjusts the height of the trajectory over the net based on the
+	user's mouse-controlled input  **)
     let updateHtOverNetByReadingInput ~p ~dt ~htOverNet ~impact ~spin ~bounceDesired 
 	    ~mouse ~minPowerAvailable ~maxPowerAvailable  =
 	assert(impact.z3 *. bounceDesired.z2 < 0.0);
@@ -571,6 +574,7 @@ let updateHumanPlayer  ~p  ~dt ~b ~opponentCurPos  ~mouse ~mouseSensitivity ~sur
 		stepMid 
 	    else stepBig in
 	let rejected = ( bounceDesired, htOverNet) in
+ 	(* Right mouse button pressed; the player went for topspin or lob*)
 	if up then 
 	    (* if up, 3 things can happen: the angle can become too vertical,
 	       the power can become too much, the power can become too little *)
@@ -624,9 +628,9 @@ let updateHumanPlayer  ~p  ~dt ~b ~opponentCurPos  ~mouse ~mouseSensitivity ~sur
 				    doAllTests ~impact ~spin ~aim:bounceLonger ~ht:desiredHt 
 					~reject:(Some rejected) 
 					~minPowerAvailable ~maxPowerAvailable 
-
+	(* Left mouse button pressed. This means that the player went for a more flat trajectory *)
 	else if down then
-	    (* what can happen when I push down? THe parabola can 
+	    (* what can happen when I push down? The parabola can 
 	       become impossible, and the needed power can become too much *)
 	    let desiredHt = htOverNet -. step *. dt *.  55.0 in
 	    if desiredHt < 10.0 then
@@ -654,7 +658,8 @@ let updateHumanPlayer  ~p  ~dt ~b ~opponentCurPos  ~mouse ~mouseSensitivity ~sur
     in	    (* end updateHtOverNetByReadingInput *)
 
 
-
+(** Again based on the name, this next function seems to be the one that
+	adjusts the placement of the shot according to the mouse movement. **)
     let updateAimByReadingInput ~p ~dt ~idealHtOverNet ~impact ~spin ~maxPowerAvailable
 	    ~curAim ~mouse ~mouseSensitivity ~iCanIncreaseTheHt ~minPowerAvailable 
 	    = 
@@ -2088,14 +2093,14 @@ let updateHumanPlayer  ~p  ~dt ~b ~opponentCurPos  ~mouse ~mouseSensitivity ~sur
 			      let rett = 
 				  if not p.hp_playsInTopmostCourtHalf then
 				      if h.hpssapb_ToTheRight then
-					  servizioInAltoSulPari
+					  upperLeftServiceBox
 				      else
-					  servizioInAltoSulDispari
+					  upperRightServiceBox
 				  else
 				      if h.hpssapb_ToTheRight then
-					  servizioInBassoSulPari
+					  lowerLeftServiceBox
 				      else
-					  servizioInBassoSulDispari in		    
+					  lowerRightServiceBox in		    
 			      let spi = if h.hpssapb_FirstService then
 				  p.hp_pc.pc_firstServiceSpin
 			      else

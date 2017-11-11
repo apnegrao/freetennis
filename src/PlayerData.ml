@@ -54,6 +54,9 @@ type playerCommon = {
 			pc_exploitationOfOpponentsPower: float;
 }
 
+(* XXX: Why isn't the fatigueData in the playerCommon? I think the playerCommon data are all constants. 
+Still, why couldn't it also have dynamic data? Not only fatigueData, in fact, there are other
+variables common to both players: scoreIndex, playsInTopMostHalf*)
 type fatigueData = 
 	{ fatigueDivisor:float;
 	  fatigueStep:float;

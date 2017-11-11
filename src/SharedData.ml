@@ -88,30 +88,25 @@ type rectangleTheShotIsMeantToFallIn = {
     rtsimtfi_left : float;
     rtsimtfi_right : float }
 
-(* TODO: Change names from Italian to English :-) *)
-(* upperLeftServiceBox *)
-let servizioInAltoSulPari  = {rtsimtfi_top = -. courtHt4 -. tol;
+let upperLeftServiceBox  = {rtsimtfi_top = -. courtHt4 -. tol;
 			      rtsimtfi_bottom = 0.0 +. tol;
 			      rtsimtfi_left = -. courtWt2 -. tol;
 			      rtsimtfi_right = 0.0
 			     }
 
-(* upperRightServiceBox *)
-let servizioInAltoSulDispari  = {rtsimtfi_top = -. courtHt4 -. tol;
+let upperRightServiceBox  = {rtsimtfi_top = -. courtHt4 -. tol;
 				 rtsimtfi_bottom = 0.0 ;
 				 rtsimtfi_left = 0.0;
 				 rtsimtfi_right = courtWt2 +. tol
 				}
 
-(* lowerLeftServiceBox *)
-let servizioInBassoSulPari  = {rtsimtfi_top = 0.0;
+let lowerLeftServiceBox  = {rtsimtfi_top = 0.0;
 			       rtsimtfi_bottom = courtHt4 +. tol;
 			       rtsimtfi_left = 0.0;
 			       rtsimtfi_right = courtWt2 +. tol
 			      } 
 
-(* lowerRightServiceBox *)
-let servizioInBassoSulDispari  = {rtsimtfi_top = 0.0;
+let lowerRightServiceBox  = {rtsimtfi_top = 0.0;
 				  rtsimtfi_bottom = courtHt4 +. tol;
 				  rtsimtfi_left = -. courtWt2 -. tol;
 				  rtsimtfi_right = 0.0
