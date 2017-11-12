@@ -1,9 +1,6 @@
 open Math
-
 open SharedData
-
 open BallMovement
-
 open Objects3D
 
 (** --- Shared Data --- **)
@@ -57,12 +54,12 @@ type playerCommon = {
 (* XXX: Why isn't the fatigueData in the playerCommon? I think the playerCommon data are all constants. 
    Still, why couldn't it also have dynamic data? Not only fatigueData, in fact, there are other
    variables common to both players: scoreIndex, playsInTopMostHalf*)
-type fatigueData = 
-  { fatigueDivisor:float;
-    fatigueStep:float;
-    fatiguePreviousPos:vec2d;
-    fatigueAvailableSprintDistance:float
-  }
+type fatigueData = {
+  fatigueDivisor:float;
+  fatigueStep:float;
+  fatiguePreviousPos:vec2d;
+  fatigueAvailableSprintDistance:float
+}
 
 type playerName = Pete | Mats | Ivan
 
@@ -79,10 +76,11 @@ type volleyOrIntention = Volley | NotVolley of attackIntention
 
 type wonLost = Won | Lost
 
-type uniformMotionData = 
-  { umd_startPos: vec2d;
-    umd_startVel: vec2d;
-    umd_timer: float}
+type uniformMotionData = { 
+  umd_startPos: vec2d;
+  umd_startVel: vec2d;
+  umd_timer: float
+}
 
 type askData = HasAskedAndObtained of vec2d | HasAskedAndWasDenied | HasNotAsked
 
@@ -109,36 +107,34 @@ let updateFatigue f newPos =
   let div = f.fatigueDivisor +. f.fatigueStep *. (length2d delta) in
   { f with
     fatiguePreviousPos = newPos;
-    fatigueDivisor = div }
+    fatigueDivisor = div
+  }
 
 let createPlayerCommonData ~plName =
   {
-    pc_maxShotHt = (match plName with Mats -> 180.0 | Ivan -> 200.0 |
-        Pete -> 200.0);
-    pc_maxSmashHt = (match plName with Mats ->300.0 | Ivan ->350.0 |
-        Pete -> 350.0);
-    pc_minSmashHt = (match plName with Mats ->250.0 | Ivan ->290.0 |
-        Pete -> 290.0);
-    pc_prefersVolleysToGroundShots =  (match plName with Mats -> false
-                                                       | Ivan -> false | Pete -> true);
+    pc_maxShotHt = 
+      (match plName with Mats -> 180.0 | Ivan -> 200.0 | Pete -> 200.0);
+    pc_maxSmashHt = 
+      (match plName with Mats ->300.0 | Ivan ->350.0 | Pete -> 350.0);
+    pc_minSmashHt = 
+      (match plName with Mats ->250.0 | Ivan ->290.0 | Pete -> 290.0);
+    pc_prefersVolleysToGroundShots = 
+      (match plName with Mats -> false | Ivan -> false | Pete -> true);
     pc_firstServiceXAngleInDeg = 7.8;
     pc_secondServiceXAngleInDeg = 6.3;
     pc_firstServiceSpeedKmh = 192.0;
     pc_secondServiceSpeedKmh = 145.0;
     pc_firstServiceSpin = 0.2; (* @@ 0.0 crashes *)
     pc_secondServiceSpin = 500.0;
-    pc_tendsToAnticipateGroundShots = (match plName with Mats -> false | Ivan
-        -> false | Pete -> true);
-
+    pc_tendsToAnticipateGroundShots = 
+      (match plName with Mats -> false | Ivan -> false | Pete -> true);
     pc_maxSpeedInFreeRunStayBack =
       (match plName with Mats -> 592.0 | Ivan-> 587.0 | Pete ->582.0);
     pc_maxSpeedInNormalResearchStayBack =
       (match plName with Mats -> 592.0 |Ivan -> 587.0 | Pete ->582.0);
-
     (* with 420.0 I pass Pete with Pete too easily on cement.*)
     pc_maxSpeedInFreeRunUnderNet = 420.0; 
     pc_maxSpeedInNormalResearchUnderNet = 420.0;
-
     (* Regolare prima lo spin, perche' influenza in modo
        			     drastico pc_maxShotPower e pc_exploitationOfOpponentsPower.
 
@@ -153,11 +149,12 @@ let createPlayerCommonData ~plName =
        			     Poi aumenta pc_exploitationOfOpponentsPower fino a che le mazzate a 
        			     chiudere sono possibili quando il colpo dell'altro e' abbast veloce.
        			  *)
-    pc_topSpin = (match plName with Mats -> 720.0 | Ivan -> 700.0 
-                                  | Pete -> 500.0); 
-    pc_backSpin = (match plName with Mats -> -. 405.0 | Ivan ->
-        -.  405.0 | Pete -> -. 250.0);
-    pc_maxShotPower = (match plName with Mats -> 2040.0  | Ivan -> 2650.0 | Pete -> 2550.0);
+    pc_topSpin = 
+      (match plName with Mats -> 720.0 | Ivan -> 700.0 | Pete -> 500.0); 
+    pc_backSpin = 
+      (match plName with Mats -> -. 405.0 | Ivan -> -.  405.0 | Pete -> -. 250.0);
+    pc_maxShotPower = 
+      (match plName with Mats -> 2040.0  | Ivan -> 2650.0 | Pete -> 2550.0);
     (* consider that ballVelZAtImpactTime is typically 1300 on cement, 1100 on clay *)
     pc_exploitationOfOpponentsPower = 0.3 (*(match plName with Mats -> 0.3| Ivan -> 0.2 | Pete ->0.3); *)
   }

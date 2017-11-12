@@ -1,23 +1,21 @@
 open PlayerData	(*For playerName FIXME: Shouldn't be needed here...*)
-
 open SharedData (*For material and possibly other stuff*)
-
 open Network (*For CouldNotConnectException FIXME: No longer needed*)
-
 open Unix
 
-type options = 
-  { opt_p0: playerName;
-    opt_p1: playerName;
-    opt_skillLevel: float;
-    opt_noSound:bool;
-    opt_realisticParabolaOpacity:bool;
-    opt_surface : material;
-    opt_resX : int;
-    opt_resY : int;
-    opt_aidebug : bool;
-    opt_doNotShowPause : bool;
-    opt_showFps : bool }
+type options = {
+  opt_p0: playerName;
+  opt_p1: playerName;
+  opt_skillLevel: float;
+  opt_noSound:bool;
+  opt_realisticParabolaOpacity:bool;
+  opt_surface : material;
+  opt_resX : int;
+  opt_resY : int;
+  opt_aidebug : bool;
+  opt_doNotShowPause : bool;
+  opt_showFps : bool 
+}
 
 type argumentResult = ArgumentError of string | ArgumentsOk of options
 

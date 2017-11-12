@@ -1,17 +1,10 @@
 open PlayerData
-
 open Objects3D
-
 open SharedData
-
 open BallMovement
-
 open Math
-
 open Network
-
 open Camera
-
 open List
 
 (** --- Consts --- **)
@@ -20,7 +13,6 @@ let fovY = 16.9 (* increase the fov, and the upper player will be smaller with r
 let zNear = 100.0
 
 (** --- Data Types --- **)
-
 type noTie = {points: int array; games: int array}
 
 type scoreState = TieBreak of int array | NoTieBreak of noTie

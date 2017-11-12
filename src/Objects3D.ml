@@ -1,5 +1,4 @@
 open Math
-
 open SharedData
 
 exception ThereIsNoImpactFrameInThisAnim
@@ -17,15 +16,19 @@ type vertex = {vertX:float; vertY:float ; vertZ:float ; vertU:float ; vertV:floa
 
 type rgba = {r:float; g:float; b:float; a:float}
 
-type polygon = { polyVerts: vertex list;
-                 polyTextureHandle:GlTex.texture_id ;
-                 polyColor: rgba; polyVisible:bool}
+type polygon = { 
+  polyVerts: vertex list;
+  polyTextureHandle:GlTex.texture_id ;
+  polyColor: rgba; polyVisible:bool
+}
 
-type obj3d = { o3d_curFrameIdx:int ; 
-               o3d_curAnimName:string;
-               o3d_animations:animation StringMap.t (* string->animation *);
-               o3d_animState: animState; 
-               o3d_visible: bool}
+type obj3d = { 
+  o3d_curFrameIdx:int ; 
+  o3d_curAnimName:string;
+  o3d_animations:animation StringMap.t (* string->animation *);
+  o3d_animState: animState; 
+  o3d_visible: bool
+}
 
 (** --- Functions --- **)
 let vertexCreate x y z u v = {vertX = x; vertY = y; vertZ=z; vertU=u; vertV=v}

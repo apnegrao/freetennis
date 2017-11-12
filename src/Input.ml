@@ -9,10 +9,12 @@ let freeTennisString = "Free Tennis"
 let mouseRefresh = 1.0 /. 24.0 (* seconds *)
 
 (** --- Data Types --- **)
-type mouse = {m_rightButtonPressed:bool; m_leftButtonPressed:bool ;
-              m_xRel:int; 
-              m_yRel:int; 
-              m_secondsSinceLastMouseMotion: float}
+type mouse = {
+  m_rightButtonPressed:bool; m_leftButtonPressed:bool ;
+  m_xRel:int; 
+  m_yRel:int; 
+  m_secondsSinceLastMouseMotion: float
+}
 
 (* TODO: Not yet used. Add after the refactoring *)
 type keyboard = {
@@ -22,11 +24,12 @@ type keyboard = {
   secondsSinceKeyPress: float
 }
 
-type varData = { vd_mouse:mouse; vd_windowWt:int; vd_windowHt:int;
-                 vd_pausedWithKey:bool;vd_slowMotionFactor:float;
-                 vd_fullScreen:bool; vd_deltaCamera:float; vd_mustQuit:bool
-(* vd_keyboard:keyboard*)
-               }
+type varData = {
+  vd_mouse:mouse; vd_windowWt:int; vd_windowHt:int;
+  vd_pausedWithKey:bool;vd_slowMotionFactor:float;
+  vd_fullScreen:bool; vd_deltaCamera:float; vd_mustQuit:bool
+  (* vd_keyboard:keyboard*)
+}
 
 (** --- Functions --- **)
 (* TODO: These next two functions are not being used for the moment. They manage the

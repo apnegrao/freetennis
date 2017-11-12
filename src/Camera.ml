@@ -1,13 +1,13 @@
 open Math
-
 open SharedData
 
 (** --- Data Types --- **)
 type cameraXBehavior = BehindThePlayer | Fixed | PushScroll
 
-
-type cameraPositionAndDirection =   { eyeX :float ; eyeY :float; eyeZ: float;
-                                      lookatX:float; lookatY:float; lookatZ:float}  
+type cameraPositionAndDirection = { 
+  eyeX :float ; eyeY :float; eyeZ: float;
+  lookatX:float; lookatY:float; lookatZ:float
+}
 
 (** --- Functions --- **)
 (* TODO: Actually, there's only one function; maybe some refactoring is needed *)

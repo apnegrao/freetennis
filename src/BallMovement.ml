@@ -1,44 +1,44 @@
 open Math
-
 open SharedData
-
 open Objects3D
 
-(** ----- Consts ----- **)
-
-
 (** ----- Data Types ----- **)
-type trajectory = {impact:vec3d ; startVel:vec3d ; spin:vec3d  ;
-                   targetRect:rectangleTheShotIsMeantToFallIn option }
+type trajectory = {
+  impact:vec3d ; startVel:vec3d ; spin:vec3d  ;
+  targetRect:rectangleTheShotIsMeantToFallIn option
+}
 
 type hitNetResult = {hnr_y: float; hnr_t:float; hnr_x:float}
 
 type infoAboutTrajArrival = {iata_x:float; iata_t:float}
 
-type infoAboutBallArrival = 
-  { iaba_timeFromImpactToArrival:float;
-    iaba_itWillBounceFirst:bool;
-    iaba_whatYItWillHave:float;
-    iaba_ballVelWhenItArrives:vec3d }
+type infoAboutBallArrival = {
+  iaba_timeFromImpactToArrival:float;
+  iaba_itWillBounceFirst:bool;
+  iaba_whatYItWillHave:float;
+  iaba_ballVelWhenItArrives:vec3d
+}
 
 (* Ball State Moving *)
-type bsm = 
-  { bsm_trajectory: trajectory;
-    bsm_isItGoodSoFar : bool;
-    bsm_lastShotWasAService:bool;
-    bsm_curTimer:float;
-    bsm_whenWillItBounce:float;
-    bsm_whenWillHitTheNet:hitNetResult option;
-    bsm_bouncesSoFar:int }
+type bsm = {
+  bsm_trajectory: trajectory;
+  bsm_isItGoodSoFar : bool;
+  bsm_lastShotWasAService:bool;
+  bsm_curTimer:float;
+  bsm_whenWillItBounce:float;
+  bsm_whenWillHitTheNet:hitNetResult option;
+  bsm_bouncesSoFar:int
+}
 
 type ballState = BS_Still of vec3d | BS_Moving of bsm
 
-type ball = 
-  { b_state:ballState;
-    b_polygon: polygon;
-    b_redCrossPolygon: polygon;
-    b_shadowPolygon: polygon;
-    b_siolpwhtb: (* scoreIndexOfLastPlayerWhoHitTheBall *) int}
+type ball = {
+  b_state:ballState;
+  b_polygon: polygon;
+  b_redCrossPolygon: polygon;
+  b_shadowPolygon: polygon;
+  b_siolpwhtb: (* scoreIndexOfLastPlayerWhoHitTheBall *) int
+}
 
 (* --- Trajectory --- *)
 (* equazioni quaderno 

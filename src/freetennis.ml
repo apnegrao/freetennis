@@ -21,36 +21,21 @@
 *)
 
 open List
-
-open Network
-
-open Sound
-
-open Input
-
-open Math
-
-open SharedData
-
-open Camera
-
-open Objects3D
-
-open Animation
-
-open BallMovement
-
-open PlayerData
-
-open Options
-
-open Renderization
-
-open HumanPlayer
-
-open ComputerPlayer
-
 open Sdlevent (* for mme_xrel etc *)
+open Network
+open Sound
+open Input
+open Math
+open SharedData
+open Camera
+open Objects3D
+open Animation
+open BallMovement
+open PlayerData
+open Options
+open Renderization
+open HumanPlayer
+open ComputerPlayer
 
 exception TheAngleAlongXIsTooCloseToPi2
 exception MistakeWithUncertainPhysicalMeaning
@@ -65,13 +50,15 @@ module IntMap = Map.Make (struct
 type td2 = { 
   t2_numFramesSinceLastFpsUpdate:int;
   t2_timeOfLatestFpsCalculation:int;
-  t2_frameCountList:int list }
+  t2_frameCountList:int list
+}
 
-type td1 = { t1_numFramesSinceLastFpsUpdate:int;
-             t1_timeOfLatestFpsCalculation:int }
+type td1 = {
+  t1_numFramesSinceLastFpsUpdate:int;
+  t1_timeOfLatestFpsCalculation:int
+}
 
 type timerData = TimerData0 | TimerData1 of td1 | TimerData2 of td2
-
 
 let fpsRefreshRate = 200 (* milliseconds *)
 

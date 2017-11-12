@@ -15,18 +15,24 @@ let gfxDir = "graphics" (* where the pngs and subdirs are located.
 module StringMap = Map.Make (String)
 
 (** ----- Animation Data ----- **)
-type animFrame = { animFrameDuration:float (*seconds *);
-                   animFrameTexture: string; animFrameHotSpot:vec2d;
-                   animFrameDimensionsOfRect:vec2d (* in pixels *)}
+type animFrame = { 
+  animFrameDuration:float (*seconds *);
+  animFrameTexture: string; animFrameHotSpot:vec2d;
+  animFrameDimensionsOfRect:vec2d (* in pixels *)
+}
 
-type serviceAnim = {serviceAnim_FrameOfBallLaunch:int;
-                    serviceAnim_FrameOfImpact:int; 
-                    serviceAnim_TimeFromLaunchToImpact:float;
-                    serviceAnim_ArrayOfFrames: animFrame array}
+type serviceAnim = {
+  serviceAnim_FrameOfBallLaunch:int;
+  serviceAnim_FrameOfImpact:int; 
+  serviceAnim_TimeFromLaunchToImpact:float;
+  serviceAnim_ArrayOfFrames: animFrame array
+}
 
-type shotAnim = {shotAnim_ArrayOfFrames: animFrame array;
-                 shotAnim_FrameOfImpact: int;
-                 shotAnim_TimeFromOpeningToImpact: float}
+type shotAnim = {
+  shotAnim_ArrayOfFrames: animFrame array;
+  shotAnim_FrameOfImpact: int;
+  shotAnim_TimeFromOpeningToImpact: float
+}
 
 type animation = ServiceAnimation of serviceAnim
                | RunAnimation of  animFrame array
@@ -77,52 +83,61 @@ let netHtAtX x =
 
 type material = Cement | Grass | Clay
 
-type surface = {s_material:material;
-                s_spinAttenuationFactor:float;
-                s_velXZAttenuationFactor:float;
-                s_velYAttenuationFactor:float}
+type surface = {
+  s_material:material;
+  s_spinAttenuationFactor:float;
+  s_velXZAttenuationFactor:float;
+  s_velYAttenuationFactor:float
+}
 
 type rectangleTheShotIsMeantToFallIn = { 
   rtsimtfi_top : float;
   rtsimtfi_bottom : float;
   rtsimtfi_left : float;
-  rtsimtfi_right : float }
+  rtsimtfi_right : float
+}
 
-let upperLeftServiceBox  = {rtsimtfi_top = -. courtHt4 -. tol;
-                            rtsimtfi_bottom = 0.0 +. tol;
-                            rtsimtfi_left = -. courtWt2 -. tol;
-                            rtsimtfi_right = 0.0
-                           }
+let upperLeftServiceBox  = {
+  rtsimtfi_top = -. courtHt4 -. tol;
+  rtsimtfi_bottom = 0.0 +. tol;
+  rtsimtfi_left = -. courtWt2 -. tol;
+  rtsimtfi_right = 0.0
+}
 
-let upperRightServiceBox  = {rtsimtfi_top = -. courtHt4 -. tol;
-                             rtsimtfi_bottom = 0.0 ;
-                             rtsimtfi_left = 0.0;
-                             rtsimtfi_right = courtWt2 +. tol
-                            }
+let upperRightServiceBox  = {
+  rtsimtfi_top = -. courtHt4 -. tol;
+  rtsimtfi_bottom = 0.0 ;
+  rtsimtfi_left = 0.0;
+  rtsimtfi_right = courtWt2 +. tol
+}
 
-let lowerLeftServiceBox  = {rtsimtfi_top = 0.0;
-                            rtsimtfi_bottom = courtHt4 +. tol;
-                            rtsimtfi_left = 0.0;
-                            rtsimtfi_right = courtWt2 +. tol
-                           } 
+let lowerLeftServiceBox  = {
+  rtsimtfi_top = 0.0;
+  rtsimtfi_bottom = courtHt4 +. tol;
+  rtsimtfi_left = 0.0;
+  rtsimtfi_right = courtWt2 +. tol
+} 
 
-let lowerRightServiceBox  = {rtsimtfi_top = 0.0;
-                             rtsimtfi_bottom = courtHt4 +. tol;
-                             rtsimtfi_left = -. courtWt2 -. tol;
-                             rtsimtfi_right = 0.0
-                            }
+let lowerRightServiceBox  = {
+  rtsimtfi_top = 0.0;
+  rtsimtfi_bottom = courtHt4 +. tol;
+  rtsimtfi_left = -. courtWt2 -. tol;
+  rtsimtfi_right = 0.0
+}
 
-let upperHalfOfCourt = {rtsimtfi_top = -. courtHt2 -. tol;
-                        rtsimtfi_bottom = 0.0;
-                        rtsimtfi_left = -. courtWt2 -. tol;
-                        rtsimtfi_right = courtWt2 +. tol
-                       }
+let upperHalfOfCourt = {
+  rtsimtfi_top = -. courtHt2 -. tol;
+  rtsimtfi_bottom = 0.0;
+  rtsimtfi_left = -. courtWt2 -. tol;
+  rtsimtfi_right = courtWt2 +. tol
+}
 
-let lowerHalfOfCourt = {rtsimtfi_top = 0.0;
-                        rtsimtfi_bottom = courtHt2 +. tol;
-                        rtsimtfi_left = -. courtWt2 -. tol;
-                        rtsimtfi_right = courtWt2 +. tol
-                       }
+let lowerHalfOfCourt = {
+  rtsimtfi_top = 0.0;
+  rtsimtfi_bottom = courtHt2 +. tol;
+  rtsimtfi_left = -. courtWt2 -. tol;
+  rtsimtfi_right = courtWt2 +. tol
+}
 
 (** ------ List ------ **)
 open List

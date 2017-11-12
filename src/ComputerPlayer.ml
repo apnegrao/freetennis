@@ -1,17 +1,10 @@
 open Math
-
 open SharedData
-
 open PlayerData
-
 open BallMovement
-
 open Animation
-
 open List
-
 open Sound
-
 open Objects3D
 
 (** ---- Consts ---- **)
@@ -31,9 +24,11 @@ let minZIcanHitTheBall = 60.0
    punto. *)
 type lockInfo = HasLocked of vec2d * float | HasNotLocked
 
-type trajData = { td_distance:float; td_speedAtBounce:float; td_bounce:vec2d; 
-                  td_neededPower:float; td_netHt:float; td_maxHt:float;
-                  td_impact:vec3d}
+type trajData = {
+  td_distance:float; td_speedAtBounce:float; td_bounce:vec2d; 
+  td_neededPower:float; td_netHt:float; td_maxHt:float;
+  td_impact:vec3d
+}
 
 type qvd = {qvd_quality: int; qvd_vote:float; qvd_descr: string}
 
