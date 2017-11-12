@@ -382,8 +382,9 @@ let doStepTowardsCenter ~p ~volleyOrInt ~lockInfo ~dt ~opponentZ ~ball ~prefix =
     let velx = signX *. getBackSpeed *. sin ang in
     let velz =  getBackSpeed *. cos ang in
     let st = 
-      let deltaX = distance2d getBackPosition myPos in
-      CPS_GetBackToCenterDuringGame ( newAttackChoice, getBackPosition, optimalPosition) in
+      (* let deltaX = distance2d getBackPosition myPos in * XXX: Unused variable *)
+      CPS_GetBackToCenterDuringGame ( newAttackChoice, getBackPosition, optimalPosition)
+    in
     let umd = {umd_timer = 0.0;
                umd_startVel= vec2dCreate velx velz;
                umd_startPos = myPos} in
@@ -1806,6 +1807,7 @@ let updateComputerPlayer  ~p ~dt ~b ~opponentCurPos ~surf ~opponentLock ~mouse ~
          p.cp_pointsWonAttacking, p.cp_pointsWonStayingBack)
       else
         let st2, u2, o2, newPWA, newPWSB = 
+          (* XXX: Unused function
           let ballGoesOutOrOntoNet bsm = 
             let ballIsAboutToHitNet = 
               let maybeT = whenWillTheTrajectoryHitTheNet bsm.bsm_trajectory in
@@ -1818,8 +1820,9 @@ let updateComputerPlayer  ~p ~dt ~b ~opponentCurPos ~surf ~opponentLock ~mouse ~
               not (theTrajectoryFallsInTheTargetRect bsm.bsm_trajectory) in
 
             (not bsm.bsm_isItGoodSoFar) ||  ballIsAboutToHitNet || ballWillGoOut
+          *)
 
-          and my2dpos = curPosOfComputerPlayer p in
+          let my2dpos = curPosOfComputerPlayer p in
 
           let backAtPointFinished ~pwa ~pws ~b ~bsm = 
             let stopTime, vx, vz, o2 = 
@@ -1944,8 +1947,8 @@ let updateComputerPlayer  ~p ~dt ~b ~opponentCurPos ~surf ~opponentLock ~mouse ~
         (p.cp_state, p.cp_umd, p.cp_obj, b, p.cp_fatigueData,
          p.cp_pointsWonAttacking, p.cp_pointsWonStayingBack)
       else
-        let destRect = if p.cp_playsInTopmostCourtHalf then
-            lowerHalfOfCourt else upperHalfOfCourt in
+        (*let destRect = if p.cp_playsInTopmostCourtHalf then
+            lowerHalfOfCourt else upperHalfOfCourt in * XXX: Unused variable *)
         let st2 = 
           let tr = 
             let targetRect = (Some (if p.cp_playsInTopmostCourtHalf then
@@ -2041,8 +2044,8 @@ let updateComputerPlayer  ~p ~dt ~b ~opponentCurPos ~surf ~opponentLock ~mouse ~
         (p.cp_state, p.cp_umd, p.cp_obj, b, p.cp_fatigueData,
          p.cp_pointsWonAttacking, p.cp_pointsWonStayingBack)
       else
-        let destRect = if p.cp_playsInTopmostCourtHalf then
-            lowerHalfOfCourt else upperHalfOfCourt in
+        (* let destRect = if p.cp_playsInTopmostCourtHalf then
+            lowerHalfOfCourt else upperHalfOfCourt in * XXX: Unused variable *)
         let st2 =
           let volleyOrIntention = 
             match r.radts_researchKind with

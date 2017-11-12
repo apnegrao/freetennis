@@ -35,8 +35,8 @@ let parseOptions=
   and resX = ref 640
   and resY = ref 480
   and client = ref ""
-  and camHt = ref "mid"
-  and clientByName = ref ""
+  (*and camHt = ref "mid" * XXX: Unused variable *)
+  (*and clientByName = ref "" * XXX: Unused variable *)
   and computerSkill = ref defaultComputerSkill
   and surf = ref "cement" in
 

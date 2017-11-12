@@ -97,8 +97,8 @@ let buildTrajFromTwoPointsAndHeight ~impact ~htOverNet ~spin ~bounceDesired  ~ta
   let qr = -. distance2d pointOverNet bounceDesired in
   let y0 = impact.y3 in
   let yn = htOverNet in
-  let qr2 = qr *. qr in
-  let q02 = q0 *. q0 in
+  (*let qr2 = qr *. qr in * XXX: Unused variable *)
+  (*let q02 = q0 *. q0 in * XXX: Unused variable *)
   let g = abs_float g in
   let s2 = spin *. 0.5 in
   let s1 = (spin +. g )*. 0.5 in

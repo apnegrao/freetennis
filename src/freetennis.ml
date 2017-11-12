@@ -522,7 +522,7 @@ let _ =
     let windowWt =  opt.opt_resX in
     let windowHt =  opt.opt_resY in
     let mouseSensitivity = 120.0 in (* TODO: move to Input or Options *)
-    let xCamBehav = PushScroll in
+    (* let xCamBehav = PushScroll in * XXX: Unused variable *)
     let surface =
       let surfOfMaterial m =
         { s_material = m;
@@ -550,19 +550,19 @@ let _ =
 
     Sdlgl.set_attr [Sdlgl.DOUBLEBUFFER true; Sdlgl.DEPTH_SIZE 16]  ;
 
+    (* FIXME: While screen isn't used, it has side effects that are executed
+    when the function is evaluated; so removing it breaks the code. I'll try to
+    re-write the code so that the side effects are executed without needing to
+    create this var. *)
     let screen =
       let listOfFlags =
         let li = [`OPENGL;  (* `DOUBLEBUF is useless for opengl, see docs *) `RESIZABLE ] in
         li
       in
-      Sdlvideo.set_video_mode ~w:windowWt ~h:windowHt ~bpp:0 listOfFlags in
+      Sdlvideo.set_video_mode ~w:windowWt ~h:windowHt ~bpp:0 listOfFlags
+    in
     Sdlwm.set_caption ~title:loadingString ~icon:freeTennisString;
-
     Sdlwm.set_icon (Sdlvideo.load_BMP ( gfxDir ^ "/ball-caption.bmp"));
-
-
-
-
 
     (* XXX: Not sure what this code does *)
     GlDraw.shade_model `smooth;

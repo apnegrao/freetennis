@@ -152,8 +152,8 @@ let updateHumanPlayer  ~p  ~dt ~b ~opponentCurPos  ~mouse ~mouseSensitivity ~sur
     let qr = -. distance2d pointOverNet bounceDesired (* idem qui, che rendo qr negativo *) in
     let y0 = impact.y3 in
     let yn = htOverNet in
-    let qr2 = qr *. qr in
-    let q02 = q0 *. q0 in
+    (*let qr2 = qr *. qr in * XXX: Unused variable *)
+    (*let q02 = q0 *. q0 in * XXX: Unused variable *)
     let g = abs_float g in
     let s2 = spin *. 0.5 in
     let s1 = (spin +. g )*. 0.5 in
@@ -345,6 +345,7 @@ let updateHumanPlayer  ~p  ~dt ~b ~opponentCurPos  ~mouse ~mouseSensitivity ~sur
 
   in
 
+  (* XXX: Unused function
   let rec highestHtSuchThatTheAngleIsNotTooSmall ~ht ~count ~aim ~impact ~spin = 
     if count = 0 then
       None 
@@ -360,7 +361,7 @@ let updateHumanPlayer  ~p  ~dt ~b ~opponentCurPos  ~mouse ~mouseSensitivity ~sur
           highestHtSuchThatTheAngleIsNotTooSmall ~ht:(ht -. 1.0) 
             ~count:(count -1 ) ~aim ~spin ~impact 
 
-  in
+  in *)
 
   let rec lowestHtSuchThatThePowerIsNotTooMuchAndTheParabolaIsPossible ~ht ~count ~impact ~desiredAim
       ~spin ~maxPowerAvailable =
@@ -738,7 +739,8 @@ let updateHumanPlayer  ~p  ~dt ~b ~opponentCurPos  ~mouse ~mouseSensitivity ~sur
         if attackIntention then 1 else 2
       else
       if attackIntention then 2 else 1
-    and passingShot = ((abs_float opponentCurPos.z2) <  courtHt2 -. 100.0) 
+    (* XXX: Unused variable
+    and passingShot = ((abs_float opponentCurPos.z2) <  courtHt2 -. 100.0) *)
     and myMaxSpeed = 
       if AI.isAttacking playerCurPos then
         p.hp_pc.pc_maxSpeedInFreeRunUnderNet 
