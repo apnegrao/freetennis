@@ -554,13 +554,11 @@ let _ =
     when the function is evaluated; so removing it breaks the code. I'll try to
     re-write the code so that the side effects are executed without needing to
     create this var. *)
-    let screen =
-      let listOfFlags =
-        let li = [`OPENGL;  (* `DOUBLEBUF is useless for opengl, see docs *) `RESIZABLE ] in
-        li
-      in
-      Sdlvideo.set_video_mode ~w:windowWt ~h:windowHt ~bpp:0 listOfFlags
+    let listOfFlags =
+      [`OPENGL;  (* `DOUBLEBUF is useless for opengl, see docs *) `RESIZABLE ]
     in
+    (* FIXME: Added this ignore to shut the warning up, but I don't like this *)
+    ignore(Sdlvideo.set_video_mode ~w:windowWt ~h:windowHt ~bpp:0 listOfFlags);
     Sdlwm.set_caption ~title:loadingString ~icon:freeTennisString;
     Sdlwm.set_icon (Sdlvideo.load_BMP ( gfxDir ^ "/ball-caption.bmp"));
 

@@ -1,7 +1,5 @@
 open PlayerData	(*For playerName FIXME: Shouldn't be needed here...*)
 open SharedData (*For material and possibly other stuff*)
-open Network (*For CouldNotConnectException FIXME: No longer needed*)
-open Unix
 
 type options = {
   opt_p0: playerName;

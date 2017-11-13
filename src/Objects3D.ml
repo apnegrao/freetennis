@@ -188,7 +188,7 @@ let create3dObj ~dirs ~initialAnim =
                          Gpointer.get_byte pixels ~pos:(offs + 2),
                          Gpointer.get_byte pixels ~pos:(offs + 3) )in
                     getpixel x y s in
-                  r = 255 && g = 0 & b = 255 && a = 255 (* needed! Transparent pixels still have colors, and that
+                  r = 255 && g = 0 && b = 255 && a = 255 (* needed! Transparent pixels still have colors, and that
                                                            											       color could be magenta *) in
                 List.filter  isHotspot pairs in
               match hotspots with

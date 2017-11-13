@@ -1,5 +1,3 @@
-open Sdlevent
-
 (** --- Consts --- **)
 let pressGMessage = "Press F or G to grab the mouse input. Read the manual for more info! :-)"
 (*These two next strings are not Input related...*)

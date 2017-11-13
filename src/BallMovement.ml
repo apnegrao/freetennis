@@ -285,13 +285,9 @@ let whenWillTheBallArriveAtZ  ~z ~s ~surf =
   match may with
   | None -> None (* @@ happened on very short dropshot *)
   | Some iata ->
-
-
-
-    if iata.iata_t < 0.0 then
-      ( assert(false);
-        None)
-    else
+      (* FIXME: Changed the previous code to get rid of a warning, but using asserts
+      is not safe... *)
+      assert(iata.iata_t >= 0.0);
       let tArrive = iata.iata_t in
       let ballHtAtTArrive = i.y3 +. startVel.y3 *. tArrive 
                             +. 0.5 *. (-. spin.y3 -. abs_float g) *. tArrive *. tArrive in
