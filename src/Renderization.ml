@@ -180,35 +180,23 @@ let render2dStuff ~players ~ball ~serverData ~doNotShowPause ~pausedOnTheOtherSi
     | _ -> false
   in
 
-  if not noOneIsServing || not ballIsInPlay || pausedWithKey || pausedOnTheOtherSide then
     match s.sc_state with
     | TieBreak points -> 
-
       (let w = whoServes s in
        let tieStr =  string_of_int points.(w) ^ " " ^ string_of_int points.(1-w) in
        let destX =  float_of_int windowWt -. d2 *. float_of_int (String.length tieStr) in
        renderString09 tieStr destX 0.0 ;
-       if not shouldRenderTooLate  then 
-         renderString09 "6 6" 0.0 0.0
-       else
-         ())
-
-
+       renderString09 "6 6" 0.0 0.0
+       );
     | NoTieBreak n ->
 
       (let w = whoServes s in
        renderNumber n.points.(w)     (float_of_int windowWt -. d *. 2.4)     0.0;
        renderNumber n.points.(1-w)   (float_of_int windowWt -. d *. 1.0)     0.0;
-
-       if not shouldRenderTooLate  then
-         let scoreStr = 
-           (string_of_int (n.games.(0)) ^ " " ^ string_of_int (n.games.(1))) in
-         renderString09 scoreStr 0.0 0.0 
-       else
-         ())
-  else
-    ();
-
+       let scoreStr = 
+         (string_of_int (n.games.(0)) ^ " " ^ string_of_int (n.games.(1))) in
+       renderString09 scoreStr 0.0 0.0 
+      );
 
   let renderTexture x0 y0 x1 y1 tex =
     GlDraw.color ~alpha:1.0 (1.0 , 1.0, 1.0);
@@ -269,8 +257,10 @@ let render2dStuff ~players ~ball ~serverData ~doNotShowPause ~pausedOnTheOtherSi
     ();
 
   if shouldRenderTooLate then 
-    renderTexture 0.0 0.0 249.0   46.0
-      (StringMap.find (gfxDir ^ "/too-late.png") handleOfTexture)
+    let yOffs = 50.0 in
+    renderTexture 0.0 yOffs 249.0   (30.0 +. yOffs)
+    (* renderTexture 0.0 0.0 249.0   46.0 *)
+    (StringMap.find (gfxDir ^ "/too-late.png") handleOfTexture)
   else
     ();
 
