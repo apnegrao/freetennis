@@ -144,7 +144,7 @@ let updateTimer  ~tim ~slowMotionFactor=
           )
       }
 
-(* XXX: It think this is unused *)
+(* FIXME: It think this is unused *)
 let stringOfScore s  ~nextServiceIsFirst =
 
   let stringOfI i =
@@ -192,6 +192,7 @@ opt:	I'm not sure what this is and I think it isn't used. By the name I'd guess 
 players:	The players array
 @returns:	A tuple (score, ball, nextServiceIsFirst, players)
 *)
+(* FIXME: Move this to BallMovement.ml *)
 let updateBall ~b ~dt ~score ~surf ~sounds ~nextServiceIsFirst ~opt ~players = 
 
   let letComputerKnowHeWon ~p ~siolpwhtb (* scoreIndexOfLastPlayerWhoHitTheBall *) ~players= 
@@ -473,7 +474,7 @@ let startServiceComputer ~scoreIsEven ~h =
 
   (state,  obj, umd)
 
-(* XXX: I don't think these next two types are being used *)
+(* FIXM: These next two types are not being used *)
 type decreaseLenResult = DLR_ErrorInsufficientPowerToSurpassNet
                        | DLR_Ok of float | DLR_ErrorCountReachedZero
 
@@ -618,22 +619,6 @@ let _ =
 
     let score = { sc_state = NoTieBreak {points = [| 0;0 |]; games = [|0;0|]};
                   sc_finishedSets = [  ] } in
-
-    let court =
-      let xrepeat, yrepeat =  
-        match surface.s_material with
-        | Grass -> 5.0, 4.0 
-        | Cement -> 3.0, 4.0
-        | Clay -> 1.0, 1.0
-      in
-      let verts = [ vertexCreate leftBound 0.0 upperBound 0.0 0.0 ;
-                    vertexCreate rightBound 0.0 upperBound xrepeat 0.0;
-                    vertexCreate rightBound 0.0 lowerBound xrepeat yrepeat;
-                    vertexCreate leftBound 0.0 lowerBound 0.0 yrepeat ] in
-      {polyVerts = verts ;
-       polyTextureHandle = StringMap.find surfaceFileName handleOfTexture;
-       polyColor = {r = 1.0; g = 1.0; b=1.0;a=1.0};
-       polyVisible = true }in
 
     let players =
       let animdata = loadAnimdata
@@ -1310,17 +1295,18 @@ let _ =
             else
               updateBall ~b:ball ~dt ~score ~surf:surface ~sounds ~nextServiceIsFirst ~opt ~players in
 
-          (* FIXME: Move this back inside render() *)
-          renderPolygon court None ;
+          renderCourt ~surfaceType:surface.s_material 
+            ~surfaceFileName:surfaceFileName ~handleOfTexture:handleOfTexture;
+
           render ~players:players ~ball:ball ~aidebug:opt.opt_aidebug ~serverData:serverData
             ~camData:camData ~handleOfTexture:handleOfTexture
             ~realisticParabolaOpacity:opt.opt_realisticParabolaOpacity ();
 
-          (* FIXME: Move this back inside render() *)      
-          render2dStuff ~players:players ~ball:ball ~serverData:serverData 
-            ~doNotShowPause:opt.opt_doNotShowPause ~pausedOnTheOtherSide:pausedOnTheOtherSide
-            ~pausedWithKey:vd.vd_pausedWithKey  ~noOneIsServing:noOneIsServing  ~windowHt:windowHt
-            ~windowWt:windowWt ~handleOfTexture:handleOfTexture ~s:score;
+          renderText ~players:players ~ball:ball ~serverData:serverData 
+            ~showRemotePause:(pausedOnTheOtherSide && not opt.opt_doNotShowPause)
+            ~showLocalPause:(vd.vd_pausedWithKey && not opt.opt_doNotShowPause)
+            ~windowHt:windowHt ~windowWt:windowWt ~handleOfTexture:handleOfTexture
+            ~score:score;
           Gl.flush ();
 
 
@@ -1365,6 +1351,7 @@ let _ =
 
     (**This is after the main loop returns. Shuts down network and
        		   SDL and exit**)
+    (* FIXME: The network part should be moved to Network.ml *)
     (match serverData with
      (* the rule is to shutdown before you close,
         			  but this is often automatic. see sockets

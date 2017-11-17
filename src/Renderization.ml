@@ -21,7 +21,6 @@ type score = { sc_state: scoreState;
                sc_finishedSets: (int array) list }
 
 (** --- Functions --- **)
-(* *)
 let whoServes s = 
   let firstToServe = 0 in
   match s.sc_state with
@@ -42,14 +41,152 @@ let whoServes s =
        		 set. *)
     if ((q.games.(0) +  q.games.(1)) mod 2 ) = 0 then firstToServe else 1 - firstToServe
 
+(*
+  Renders the court: surface, lines and net.
+*)
+let renderCourt ~surfaceType ~surfaceFileName ~handleOfTexture =
+  let surface =
+    let xrepeat, yrepeat =  
+      match surfaceType with
+      | Grass -> 5.0, 4.0 
+      | Cement -> 3.0, 4.0
+      | Clay -> 1.0, 1.0
+    in
+    let verts = [ vertexCreate leftBound 0.0 upperBound 0.0 0.0 ;
+                  vertexCreate rightBound 0.0 upperBound xrepeat 0.0;
+                  vertexCreate rightBound 0.0 lowerBound xrepeat yrepeat;
+                  vertexCreate leftBound 0.0 lowerBound 0.0 yrepeat ]
+    in
+    {polyVerts = verts ;
+      polyTextureHandle = StringMap.find surfaceFileName handleOfTexture;
+      polyColor = {r = 1.0; g = 1.0; b=1.0;a=1.0};
+      polyVisible = true }
+  in
+  renderPolygon surface None;
+
+  let xrepeat = 20.0 
+  and yrepeat = 4.0 in
+  let v1 = [ vertexCreate (-. distanceFromPolesToExternalBorder -. courtWt2)
+               netHtBorder 0.0 0.0 0.0;
+             vertexCreate 0.0 netHtCenter 0.0 xrepeat 0.0;
+             vertexCreate 0.0 0.0 0.0 xrepeat yrepeat;
+             vertexCreate (-.distanceFromPolesToExternalBorder -. courtWt2) 0.0 0.0 0.0 yrepeat ]
+  in
+  let offx = 40.0 in
+  let v1s = [ vertexCreate ((-. distanceFromPolesToExternalBorder -. courtWt2) +. offx)
+                0.1   (2.0 *. netHtBorder) 0.0 0.0;
+              vertexCreate offx 0.1 (2.0 *. netHtCenter) xrepeat 0.0;
+              vertexCreate 0.0 0.1 0.0 xrepeat yrepeat;
+              vertexCreate (-.distanceFromPolesToExternalBorder -. courtWt2) 0.1 0.0 0.0 yrepeat ] 
+  in
+  let polyNet1 = { polyVerts = v1 ;
+                   polyTextureHandle = (StringMap.find  (gfxDir ^ "/rete.bmp.png") handleOfTexture);
+                   polyColor = {r = 1.0; g = 1.0; b=1.0;a= 0.6};
+                   polyVisible = true} 
+  in
+  let polyNet1Shad = {polyNet1 with
+                      polyColor = {r = 0.0; g = 0.0; b=0.0;a= shadowIntensity };
+                      polyVerts = v1s}
+  in
+  let v2 = [ vertexCreate 0.0 netHtCenter 0.0 0.0 0.0;
+             vertexCreate (distanceFromPolesToExternalBorder +. courtWt2)
+               netHtBorder 0.0 xrepeat 0.0;
+             vertexCreate (distanceFromPolesToExternalBorder +. courtWt2)
+               0.0 0.0 xrepeat 5.0;
+             vertexCreate 0.0 0.0 0.0 0.0 5.0] 
+  and v2s = [ vertexCreate offx 0.1 (2.0 *. netHtCenter)   0.0 0.0;
+              vertexCreate (offx +. (distanceFromPolesToExternalBorder +. courtWt2)) 0.1 (2.0 *. netHtBorder) xrepeat 0.0;
+              vertexCreate (distanceFromPolesToExternalBorder +. courtWt2) 0.1 0.0 xrepeat yrepeat;
+              vertexCreate 0.0 0.1 0.0 0.0 yrepeat]
+  in
+  let polyNet2 = { polyNet1 with polyVerts =v2 } in
+  let polyNet2Shad = {polyNet2 with
+                      polyColor = {r = 0.0; g = 0.0; b=0.0;a= shadowIntensity };
+                      polyVerts = v2s}
+  in
+  (
+  GlDraw.line_width 2.0;
+  Gl.disable `texture_2d;
+  Gl.disable `depth_test;
+  (* Draws court lines except service boxes *)
+  GlDraw.begins `line_strip;
+  GlDraw.color ~alpha:0.64 (0.95, 0.95, 0.95);
+  GlDraw.vertex3 ( -. courtWt2, 0.0, -. courtHt2 ) ;
+  GlDraw.vertex3 ( courtWt2, 0.0, -. courtHt2 ) ;
+  GlDraw.vertex3 ( courtWt2, 0.0, courtHt2 ) ;
+  GlDraw.vertex3 ( -. courtWt2, 0.0, courtHt2 ) ;
+  GlDraw.vertex3 ( -. courtWt2, 0.0, -. courtHt2 ) ;
+  GlDraw.vertex3 ( -. (courtWt2 +. corridorWt), 0.0, -. courtHt2 ) ;
+  GlDraw.vertex3 ( -. (courtWt2 +. corridorWt), 0.0, courtHt2 ) ;
+  GlDraw.vertex3 ( -. courtWt2 , 0.0, courtHt2 ) ;
+  GlDraw.ends ();
+  GlDraw.begins `line_strip;
+  GlDraw.vertex3 ( courtWt2, 0.0, -. courtHt2 ) ;
+  GlDraw.vertex3 ( courtWt2 +. corridorWt, 0.0, -. courtHt2 ) ;
+  GlDraw.vertex3 ( courtWt2 +. corridorWt, 0.0, courtHt2 ) ;
+  GlDraw.vertex3 ( courtWt2 , 0.0, courtHt2 ) ;
+  GlDraw.ends ();
+
+  (* Draws service boxes *)
+  GlDraw.begins `lines;
+  GlDraw.vertex3 ( -. courtWt2, 0.0, courtHt4 ) ;
+  GlDraw.vertex3 ( courtWt2, 0.0, courtHt4 ) ;
+  GlDraw.vertex3 ( -. courtWt2, 0.0, -. courtHt4 ) ;
+  GlDraw.vertex3 (  courtWt2, 0.0, -. courtHt4 ) ;
+  GlDraw.vertex3 (  0.0, 0.0,  courtHt4 ) ;
+  GlDraw.vertex3 (  0.0, 0.0,  -. courtHt4 ) ;
+  GlDraw.vertex3 (  0.0, 0.0,  courtHt2 ) ;
+  GlDraw.vertex3 (  0.0, 0.0,  courtHt2 -. 25.0 ) ;
+  GlDraw.vertex3 (  0.0, 0.0,  -. courtHt2 ) ;
+  GlDraw.vertex3 (  0.0, 0.0,  -. courtHt2 +. 25.0 ) ;
+  GlDraw.ends ();
+
+  (* draw net *)
+  GlDraw.line_width 3.0 ;
+  Gl.disable `texture_2d;
+  GlDraw.begins `line_strip;
+  GlDraw.color ~alpha:1.0 (0.82, 0.82, 0.82);
+  GlDraw.vertex3 ( -. distanceFromPolesToExternalBorder -. courtWt2 , netHtBorder, 0.5 ) ;
+  GlDraw.vertex3 ( 0.0 , netHtCenter, 0.5 ) ;
+  GlDraw.vertex3 ( distanceFromPolesToExternalBorder +. courtWt2 , netHtBorder, 0.5 ) ;
+  GlDraw.ends ();
+
+  GlDraw.begins `line_strip;
+  GlDraw.vertex3 ( 0.0 , netHtCenter, 0.5 ) ;
+  GlDraw.vertex3 ( 0.0 , 0.0, 0.5 ) ;
+  GlDraw.ends ();
+
+  renderPolygon polyNet1 None;
+  renderPolygon polyNet2 None;
+  renderPolygon polyNet1Shad None;
+  renderPolygon polyNet2Shad None;
+
+  (* net poles *)	
+  Gl.disable `texture_2d;
+  Gl.enable `line_smooth;
+  Gl.disable `depth_test;
+
+  GlDraw.line_width 7.0 ;
+  GlDraw.color ~alpha:1.0 (0.3, 0.4, 0.3);
+  GlDraw.begins `line_strip;
+  let poleX = -. distanceFromPolesToExternalBorder -. courtWt2 in
+  GlDraw.vertex3 (  poleX, netHtBorder +. 2.0, 0.0 ) ;
+  GlDraw.vertex3 ( poleX, 0.0, 0.0 ); 
+  GlDraw.ends ();
+
+  GlDraw.begins `line_strip;
+  GlDraw.vertex3 (  -. poleX, netHtBorder +. 2.0, 0.0 ) ;
+  GlDraw.vertex3 ( -. poleX, 0.0, 0.0 ) ;
+  GlDraw.ends ();
+  )
+
 (* As the name indicates, this functions prints 2d elements such as the score and 
    other strings shown in various parts of the game ('Pause', 'Fault', etc...), as well
    as the energy bar of the player *)
-(* TODO: Check if we can coalesce all these pause parameters into a single one *)
-(* FIXME: Actually, take a good look at all these parameters to see what makes 
+(* FIXME: Take a good look at all these parameters to see what makes 
    sense here... *)
-let render2dStuff ~players ~ball ~serverData ~doNotShowPause ~pausedOnTheOtherSide 
-    ~pausedWithKey  ~noOneIsServing  ~windowHt ~windowWt ~handleOfTexture ~s =
+let renderText ~players ~ball ~serverData ~showRemotePause 
+    ~showLocalPause ~windowHt ~windowWt ~handleOfTexture ~score =
   let plBelow =
     if playsInTopmostCourtHalf  players.(0) then players.(1) else players.(0) in
   let factor = float_of_int windowHt /. 480.0 in
@@ -58,7 +195,7 @@ let render2dStuff ~players ~ball ~serverData ~doNotShowPause ~pausedOnTheOtherSi
   and d2 = (22.0 *. 22.0 /. 26.0) *. factor
   and h2 = 22.0 *. factor in
   (** Render score *)
-  (*I'm pretty convinced that these renderNumber,renderString09 and 
+  (*TODO: I'm pretty convinced that these renderNumber,renderString09 and 
     		renderNumber09 can be merged...*)
   let renderNumber n destx desty =
     GlDraw.color ~alpha:1.0 (1.0 , 1.0, 1.0);
@@ -179,39 +316,34 @@ let render2dStuff ~players ~ball ~serverData ~doNotShowPause ~pausedOnTheOtherSi
        | _ -> false)
     | _ -> false
   in
-
-    match s.sc_state with
-    | TieBreak points -> 
-      (let w = whoServes s in
-       let tieStr =  string_of_int points.(w) ^ " " ^ string_of_int points.(1-w) in
-       let destX =  float_of_int windowWt -. d2 *. float_of_int (String.length tieStr) in
-       renderString09 tieStr destX 0.0 ;
-       renderString09 "6 6" 0.0 0.0
-       );
-    | NoTieBreak n ->
-
-      (let w = whoServes s in
-       renderNumber n.points.(w)     (float_of_int windowWt -. d *. 2.4)     0.0;
-       renderNumber n.points.(1-w)   (float_of_int windowWt -. d *. 1.0)     0.0;
-       let scoreStr = 
-         (string_of_int (n.games.(0)) ^ " " ^ string_of_int (n.games.(1))) in
-       renderString09 scoreStr 0.0 0.0 
-      );
+  match score.sc_state with
+  | TieBreak points -> 
+    (let w = whoServes score in
+     let tieStr =  string_of_int points.(w) ^ " " ^ string_of_int points.(1-w) in
+     let destX =  float_of_int windowWt -. d2 *. float_of_int (String.length tieStr) in
+     renderString09 tieStr destX 0.0 ;
+     renderString09 "6 6" 0.0 0.0
+     );
+  | NoTieBreak n ->
+    (let w = whoServes score in
+     renderNumber n.points.(w)     (float_of_int windowWt -. d *. 2.4)     0.0;
+     renderNumber n.points.(1-w)   (float_of_int windowWt -. d *. 1.0)     0.0;
+     let scoreStr = 
+       (string_of_int (n.games.(0)) ^ " " ^ string_of_int (n.games.(1))) in
+     renderString09 scoreStr 0.0 0.0 
+    );
 
   let renderTexture x0 y0 x1 y1 tex =
     GlDraw.color ~alpha:1.0 (1.0 , 1.0, 1.0);
-
     GlTex.bind_texture ~target:`texture_2d tex;
     Gl.enable `texture_2d;
     GlDraw.begins `triangle_fan;
-
 
     let verts =
       [  (x0 ,  y0, 0.0 , 0.0);
          (x1,  y0, 1.0, 0.0);
          (x1, y1, 1.0, 1.0);
          (x0, y1, 0.0, 1.0) ] in
-
     let foo (x, y, u, v) = 
       GlTex.coord2 (u, v) ;
       GlDraw.vertex2 ( x, y) in
@@ -219,35 +351,25 @@ let render2dStuff ~players ~ball ~serverData ~doNotShowPause ~pausedOnTheOtherSi
     List.iter foo verts;
     GlDraw.ends ();
 
-
   in
-  if pausedWithKey && not doNotShowPause then
-    let wtPixmap = 196.0 
-    and htPixmap = 39.0 in
+  let renderPause ~wtPixmap ~imagePath =
+    let htPixmap = 39.0 in
     let wtScaled = wtPixmap 
     and htScaled = htPixmap in
     let winHt2 = float_of_int windowHt *. 0.5 in
     let offsx = (float_of_int windowWt -. wtScaled) *. 0.5 in
     let offsy = ( winHt2 -. htScaled) *. 0.5 in
     renderTexture offsx offsy  (offsx +. wtScaled)  (offsy +. htScaled)
-      (StringMap.find ( gfxDir ^ "/paused.png") handleOfTexture)
-
+      (StringMap.find ( gfxDir ^ imagePath) handleOfTexture)
+  in
+  if showLocalPause then
+    renderPause ~wtPixmap:196.0 ~imagePath:"/paused.png"
   else
     ();
-
-  if pausedOnTheOtherSide && not doNotShowPause then
-    let wtPixmap = 408.0 
-    and htPixmap = 39.0 in
-    let wtScaled = wtPixmap 
-    and htScaled = htPixmap in
-    let winHt2 = float_of_int windowHt *. 0.5 in
-    let offsx = (float_of_int windowWt -. wtScaled) *. 0.5 in
-    let offsy = winHt2 +. ( winHt2 -. htScaled) *. 0.5 in
-    renderTexture offsx offsy  (offsx +. wtScaled)  (offsy +. htScaled)
-      (StringMap.find (gfxDir ^ "/paused-remote.png") handleOfTexture)
+  if showRemotePause then
+    renderPause ~wtPixmap:408.0 ~imagePath:"/paused-remote.png"
   else
     ();
-
 
   if shouldRenderFault then 
     let yOffs = 50.0 in
@@ -263,7 +385,6 @@ let render2dStuff ~players ~ball ~serverData ~doNotShowPause ~pausedOnTheOtherSi
     (StringMap.find (gfxDir ^ "/too-late.png") handleOfTexture)
   else
     ();
-
 
   let maybeRenderSprint p = 
     match p with
@@ -289,8 +410,6 @@ let render2dStuff ~players ~ball ~serverData ~doNotShowPause ~pausedOnTheOtherSi
     | CP _ -> ()
   in
   (Array.iter maybeRenderSprint players;
-
-
    GlMat.mode `projection;
    GlMat.load_identity ();
    GluMat.perspective ~fovy:fovY ~aspect:(float_of_int windowWt /. float_of_int windowHt) ~z:(zNear,  20000.0);
@@ -304,92 +423,6 @@ let render ~players ~ball ~aidebug ~serverData ~camData
     if playsInTopmostCourtHalf players.(0) then players.(1) else players.(0) in
   let plAbove =
     if playsInTopmostCourtHalf  players.(0) then players.(0) else players.(1) in
-
-  let xrepeat = 20.0 
-  and yrepeat = 4.0 in
-  let v1 = [ vertexCreate (-. distanceFromPolesToExternalBorder -. courtWt2)
-               netHtBorder 0.0 0.0 0.0;
-             vertexCreate 0.0 netHtCenter 0.0 xrepeat 0.0;
-             vertexCreate 0.0 0.0 0.0 xrepeat yrepeat;
-             vertexCreate (-.distanceFromPolesToExternalBorder -. courtWt2) 0.0 0.0 0.0 yrepeat ]
-  in
-  let offx = 40.0 in
-  let v1s = [ vertexCreate ((-. distanceFromPolesToExternalBorder -. courtWt2) +. offx)
-                0.1   (2.0 *. netHtBorder) 0.0 0.0;
-              vertexCreate offx 0.1 (2.0 *. netHtCenter) xrepeat 0.0;
-              vertexCreate 0.0 0.1 0.0 xrepeat yrepeat;
-              vertexCreate (-.distanceFromPolesToExternalBorder -. courtWt2) 0.1 0.0 0.0 yrepeat ] 
-  in
-  let polyNet1 = { polyVerts = v1 ;
-                   polyTextureHandle = (StringMap.find  (gfxDir ^ "/rete.bmp.png") handleOfTexture);
-                   polyColor = {r = 1.0; g = 1.0; b=1.0;a= 0.6};
-                   polyVisible = true} 
-  in
-  let polyNet1Shad = {polyNet1 with
-                      polyColor = {r = 0.0; g = 0.0; b=0.0;a= shadowIntensity };
-                      polyVerts = v1s}
-  in
-  let v2 = [ vertexCreate 0.0 netHtCenter 0.0 0.0 0.0;
-             vertexCreate (distanceFromPolesToExternalBorder +. courtWt2)
-               netHtBorder 0.0 xrepeat 0.0;
-             vertexCreate (distanceFromPolesToExternalBorder +. courtWt2)
-               0.0 0.0 xrepeat 5.0;
-             vertexCreate 0.0 0.0 0.0 0.0 5.0] 
-  and v2s = [ vertexCreate offx 0.1 (2.0 *. netHtCenter)   0.0 0.0;
-              vertexCreate (offx +. (distanceFromPolesToExternalBorder +. courtWt2)) 0.1 (2.0 *. netHtBorder) xrepeat 0.0;
-              vertexCreate (distanceFromPolesToExternalBorder +. courtWt2) 0.1 0.0 xrepeat yrepeat;
-              vertexCreate 0.0 0.1 0.0 0.0 yrepeat]
-  in
-  let polyNet2 = { polyNet1 with polyVerts =v2 } in
-  let polyNet2Shad = {polyNet2 with
-                      polyColor = {r = 0.0; g = 0.0; b=0.0;a= shadowIntensity };
-                      polyVerts = v2s}
-  in
-
-  GlDraw.line_width 2.0;
-  Gl.disable `texture_2d;
-  Gl.disable `depth_test;
-  GlDraw.begins `line_strip;
-  GlDraw.color ~alpha:0.64 (0.95, 0.95, 0.95);
-  GlDraw.vertex3 ( -. courtWt2, 0.0, -. courtHt2 ) ;
-  GlDraw.vertex3 ( courtWt2, 0.0, -. courtHt2 ) ;
-  GlDraw.vertex3 ( courtWt2, 0.0, courtHt2 ) ;
-  GlDraw.vertex3 ( -. courtWt2, 0.0, courtHt2 ) ;
-  GlDraw.vertex3 ( -. courtWt2, 0.0, -. courtHt2 ) ;
-  GlDraw.vertex3 ( -. (courtWt2 +. corridorWt), 0.0, -. courtHt2 ) ;
-  GlDraw.vertex3 ( -. (courtWt2 +. corridorWt), 0.0, courtHt2 ) ;
-  GlDraw.vertex3 ( -. courtWt2 , 0.0, courtHt2 ) ;
-  GlDraw.ends ();
-
-
-  GlDraw.begins `line_strip;
-  GlDraw.vertex3 ( courtWt2, 0.0, -. courtHt2 ) ;
-  GlDraw.vertex3 ( courtWt2 +. corridorWt, 0.0, -. courtHt2 ) ;
-  GlDraw.vertex3 ( courtWt2 +. corridorWt, 0.0, courtHt2 ) ;
-  GlDraw.vertex3 ( courtWt2 , 0.0, courtHt2 ) ;
-
-  GlDraw.ends ();
-
-
-  GlDraw.begins `lines;
-  GlDraw.vertex3 ( -. courtWt2, 0.0, courtHt4 ) ;
-  GlDraw.vertex3 ( courtWt2, 0.0, courtHt4 ) ;
-  GlDraw.vertex3 ( -. courtWt2, 0.0, -. courtHt4 ) ;
-  GlDraw.vertex3 (  courtWt2, 0.0, -. courtHt4 ) ;
-
-
-  GlDraw.vertex3 (  0.0, 0.0,  courtHt4 ) ;
-  GlDraw.vertex3 (  0.0, 0.0,  -. courtHt4 ) ;
-
-
-  GlDraw.vertex3 (  0.0, 0.0,  courtHt2 ) ;
-  GlDraw.vertex3 (  0.0, 0.0,  courtHt2 -. 25.0 ) ;
-
-  GlDraw.vertex3 (  0.0, 0.0,  -. courtHt2 ) ;
-  GlDraw.vertex3 (  0.0, 0.0,  -. courtHt2 +. 25.0 ) ;
-
-  GlDraw.ends ();
-
 
   begin
     match ball.b_state with
@@ -539,52 +572,6 @@ let render ~players ~ball ~aidebug ~serverData ~camData
 
 
   renderPolygon ball.b_polygon (Some (curBallPos ball));
-
-
-  (* draw net *)
-
-  GlDraw.line_width 3.0 ;
-  Gl.disable `texture_2d;
-  GlDraw.begins `line_strip;
-  GlDraw.color ~alpha:1.0 (0.82, 0.82, 0.82);
-  GlDraw.vertex3 ( -. distanceFromPolesToExternalBorder -. courtWt2 , netHtBorder, 0.5 ) ;
-  GlDraw.vertex3 ( 0.0 , netHtCenter, 0.5 ) ;
-  GlDraw.vertex3 ( distanceFromPolesToExternalBorder +. courtWt2 , netHtBorder, 0.5 ) ;
-  GlDraw.ends ();
-
-  GlDraw.begins `line_strip;
-  GlDraw.vertex3 ( 0.0 , netHtCenter, 0.5 ) ;
-  GlDraw.vertex3 ( 0.0 , 0.0, 0.5 ) ;
-  GlDraw.ends ();
-
-
-
-
-  renderPolygon polyNet1 None;
-  renderPolygon polyNet2 None;
-  renderPolygon polyNet1Shad None;
-  renderPolygon polyNet2Shad None;
-
-
-  (* net poles *)	
-
-  Gl.disable `texture_2d;
-  Gl.enable `line_smooth;
-  Gl.disable `depth_test;
-
-  GlDraw.line_width 7.0 ;
-  GlDraw.color ~alpha:1.0 (0.3, 0.4, 0.3);
-  GlDraw.begins `line_strip;
-  let poleX = -. distanceFromPolesToExternalBorder -. courtWt2 in
-  GlDraw.vertex3 (  poleX, netHtBorder +. 2.0, 0.0 ) ;
-  GlDraw.vertex3 ( poleX, 0.0, 0.0 ); 
-  GlDraw.ends ();
-
-  GlDraw.begins `line_strip;
-  GlDraw.vertex3 (  -. poleX, netHtBorder +. 2.0, 0.0 ) ;
-  GlDraw.vertex3 ( -. poleX, 0.0, 0.0 ) ;
-  GlDraw.ends ();
-
 
   (* draw parabola *)
 
