@@ -7,19 +7,6 @@ open Network
 open Camera
 open List
 
-(** --- Consts --- **)
-let fovY = 16.9 (* increase the fov, and the upper player will be smaller with respect to the lower *)
-
-let zNear = 100.0
-
-(** --- Data Types --- **)
-type noTie = {points: int array; games: int array}
-
-type scoreState = TieBreak of int array | NoTieBreak of noTie
-
-type score = { sc_state: scoreState;
-               sc_finishedSets: (int array) list }
-
 (** --- Functions --- **)
 let whoServes s = 
   let firstToServe = 0 in
@@ -195,8 +182,6 @@ let renderText ~players ~ball ~serverData ~showRemotePause
   and d2 = (22.0 *. 22.0 /. 26.0) *. factor
   and h2 = 22.0 *. factor in
   (** Render score *)
-  (*TODO: I'm pretty convinced that these renderNumber,renderString09 and 
-    		renderNumber09 can be merged...*)
   let renderNumber n destx desty =
     GlDraw.color ~alpha:1.0 (1.0 , 1.0, 1.0);
     let t = 

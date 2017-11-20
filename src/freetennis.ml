@@ -21,7 +21,7 @@
 *)
 
 open List
-open Sdlevent (* for mme_xrel etc *)
+
 open Network
 open Sound
 open Input
@@ -180,277 +180,6 @@ let scoreIndex p =
   | HP h -> h.hp_scoreIndex
   | CP c -> c.cp_scoreIndex
 
-(*
-Let's see what this method actually does.
-b:	The ball (type ball)
-dt:	Seconds since last frame (see calcDt)
-score:	The score (type score)
-surf:	Surface
-sounds:	The sounds to be played during the game (type sounds)
-nextServiceIsFirst:	A boolean indicating if the next service is a first service
-opt:	I'm not sure what this is and I think it isn't used. By the name I'd guess this is the 'options' data type
-players:	The players array
-@returns:	A tuple (score, ball, nextServiceIsFirst, players)
-*)
-(* FIXME: Move this to BallMovement.ml *)
-let updateBall ~b ~dt ~score ~surf ~sounds ~nextServiceIsFirst ~opt ~players = 
-
-  let letComputerKnowHeWon ~p ~siolpwhtb (* scoreIndexOfLastPlayerWhoHitTheBall *) ~players= 
-    match p with 
-    | CP c ->
-      if c.cp_scoreIndex = siolpwhtb then
-        let pwa, pws = 
-          let opponentCurPos = 
-            let mOpp = pick (Array.to_list players) (fun x -> scoreIndex x != c.cp_scoreIndex) in
-            match mOpp with
-            | None -> assert false
-            | Some opp -> curPosOfPlayer opp in
-          updateMemoryOfPointsWonAndLost ~p:c ~won:true ~opponentCurPos in
-        CP {c with cp_pointsWonAttacking = pwa;
-                   cp_pointsWonStayingBack = pws}
-      else
-        p
-    | HP _ -> 
-      p
-  in
-
-  match b.b_state with
-  | BS_Still _ -> 
-    score, b, nextServiceIsFirst, players
-
-  | BS_Moving m ->
-    let newTimer = dt +. m.bsm_curTimer in
-
-    let b = 
-      let newm = { m with bsm_curTimer = newTimer} in
-      {b with b_state = BS_Moving newm} in
-    let incScore p s  = 
-      assert (p = 0 || p = 1);
-      let opponent x = 1-x in
-      let incPair p arr = 
-        if p = 0 then
-          [| arr.(0) +1 ; arr.(1) |]
-        else
-          [| arr.(0) ; arr.(1)+1 |]
-      in
-      match s.sc_state with
-
-      | TieBreak points -> 
-        let newPoints = incPair p points in
-        if newPoints.(p) >=7 && newPoints.(p) > newPoints.(opponent p) +1 then
-          let newSets = (incPair p    [|6; 6 |]   )::s.sc_finishedSets in
-
-          { sc_state = NoTieBreak {points= [|0;0|]; games=[|0;0|]};
-            sc_finishedSets = newSets }
-        else
-          { s with sc_state =  TieBreak newPoints}
-
-      | NoTieBreak n ->
-
-        let rec normalize p = 
-          if p.(0) > 3 && p.(1) > 3 then
-            normalize [| p.(0) -1 ;  p.(1) -1 |]
-          else
-            p
-        in
-
-
-        let newPoints = normalize (incPair p n.points) in
-        if newPoints.(p) > 3 && newPoints.(p) > newPoints.(opponent p)+1 then
-          let newGames = incPair p n.games in
-          if newGames.(p) >= 6 && newGames.(p) > newGames.(opponent p) + 1 then
-            { sc_state = NoTieBreak {points= [|0;0|]; games=[|0;0|]};
-              sc_finishedSets = newGames::s.sc_finishedSets }
-          else if newGames.(p) = 6 && newGames.(opponent p) = 6 then
-            { s with sc_state = TieBreak  [|0;0|]}
-          else
-            { s with sc_state = NoTieBreak {points= [|0;0|]; games=newGames}}
-        else
-          { s with sc_state = NoTieBreak { n with points= newPoints}}
-
-    in
-    let score, b, nextServiceIsFirst, newPlayers0  = 
-      if newTimer <= m.bsm_whenWillItBounce then
-        score, b, nextServiceIsFirst, players
-      else
-        let bounceOnGround ~b ~s ~score ~surf ~nextServiceIsFirst = 
-          let newBounceCount = s.bsm_bouncesSoFar +1 in 
-
-          let (newScore, isGoodSoFar, nextServiceIsFirst, newPlayers) = 
-            if newBounceCount = 1 then
-              match s.bsm_trajectory.targetRect with
-              | None ->
-                score, false, true, players
-              | _ ->
-
-                let isIn = theTrajectoryFallsInTheTargetRect s.bsm_trajectory in
-                if isIn then
-                  ( score, true, true, players)
-                else
-                  ( playSoundId ~sounds ~id:SoundFault;
-
-                    if s.bsm_lastShotWasAService && nextServiceIsFirst then
-                      (score, false, false, players)
-                    else
-                      let s' = incScore (1-b.b_siolpwhtb) score in
-
-                      s' ,false, true , players
-                  )
-
-            else if newBounceCount = 2 then
-              if s.bsm_isItGoodSoFar then
-                let s' = incScore b.b_siolpwhtb score  in
-                let pl' = 
-                  (* 					  print_endline ("bounceOnGround: inform computer he has won"); *)
-
-                  Array.map (fun p -> letComputerKnowHeWon ~p
-                                ~siolpwhtb:b.b_siolpwhtb ~players)
-                    players
-                in
-                ( s' ,false, true, pl')
-              else
-                (score, false, nextServiceIsFirst, players)
-            else
-              ( score, false, nextServiceIsFirst, players)
-
-          in
-          let newTraj = 
-            let curV = curBallVel s in
-            let whereBounce = whereWillItBounce s.bsm_trajectory in
-
-            { impact = vec3dCreate whereBounce.x2 0.0 whereBounce.z2 ;
-              startVel = vec3dCreate (curV.x3 /. surf.s_velXZAttenuationFactor)
-                  (-.(curV.y3 /. surf.s_velYAttenuationFactor) )
-                  (curV.z3 /. surf.s_velXZAttenuationFactor) ;
-              spin = vec3dCreate (s.bsm_trajectory.spin.x3 /. surf.s_spinAttenuationFactor)
-                  (s.bsm_trajectory.spin.y3 /. surf.s_spinAttenuationFactor)
-                  (s.bsm_trajectory.spin.z3 /. surf.s_spinAttenuationFactor);
-              targetRect = None   }
-          in
-
-          let newState =   
-            if newTraj.startVel.y3 < 120.0 then
-              BS_Still newTraj.impact
-            else
-              let bo = whenWillItBounce newTraj in
-              BS_Moving { bsm_trajectory = newTraj;
-                          bsm_isItGoodSoFar = isGoodSoFar;
-                          bsm_curTimer = 0.0;
-                          bsm_whenWillItBounce = bo;
-                          bsm_lastShotWasAService = m.bsm_lastShotWasAService;
-                          bsm_whenWillHitTheNet = whenWillTheTrajectoryHitTheNet newTraj;
-                          bsm_bouncesSoFar = newBounceCount}
-          in
-
-
-          (newScore, { b with b_state = newState }, nextServiceIsFirst, newPlayers)
-
-        in (* end bounceOnGround *)
-
-        playSoundId  ~sounds ~id:SoundBounce;
-        bounceOnGround ~b ~s:m ~score ~surf ~nextServiceIsFirst
-    in
-
-    match b.b_state with 
-    | BS_Still _ -> score, b, nextServiceIsFirst, newPlayers0
-
-    | BS_Moving m ->
-
-      let bounceAgainstNetOrWall ~b ~z ~score ~s ~nextServiceIsFirst ~players = 
-        let score', nextServiceIsFirst, newPlayers = 
-          if s.bsm_bouncesSoFar = 0 then
-            if nextServiceIsFirst && s.bsm_lastShotWasAService then
-              score, false, players
-            else
-              let s' = incScore (1 - b.b_siolpwhtb) score in
-              s', true, players
-          else if s.bsm_bouncesSoFar = 1 && s.bsm_isItGoodSoFar then
-            let s' = incScore b.b_siolpwhtb score in
-            let pl' = 
-              (* 					print_endline ("bounceAgainstNetOrWall: inform computer he has won"); *)
-              Array.map (fun p -> letComputerKnowHeWon ~p
-                            ~siolpwhtb:b.b_siolpwhtb ~players)
-                players
-
-            in
-            s', true, pl'
-          else
-            score, nextServiceIsFirst, players
-        in
-
-        let curV = curBallVel s in
-        let newVel = vec3dCreate (curV.x3 /. 8.0) (curV.y3 /. 4.0) (-. curV.z3
-                                                                       /. 8.0) in
-
-        let curP = curBallPos b in
-        let newImpact = 
-          if newVel.z3 > 0.0 then
-            vec3dCreate curP.x3 curP.y3 (z +. 2.0)
-          else
-            vec3dCreate curP.x3 curP.y3 (z -. 2.0) in
-
-        let newTraj = { impact = newImpact;
-                        startVel = newVel;
-                        spin = vec3dNull ;
-                        targetRect = None
-                      } in
-        let s' = { bsm_bouncesSoFar = s.bsm_bouncesSoFar +1 ;
-                   bsm_isItGoodSoFar = false;
-                   bsm_trajectory = newTraj;
-                   bsm_lastShotWasAService = s.bsm_lastShotWasAService;
-                   bsm_curTimer = 0.0;
-                   bsm_whenWillItBounce = whenWillItBounce newTraj;
-                   bsm_whenWillHitTheNet = whenWillTheTrajectoryHitTheNet newTraj } in
-
-        let b' = { b with  b_state= BS_Moving s' } in
-        (b', score', nextServiceIsFirst, newPlayers)
-
-      in
-
-      let b, score, nextServiceIsFirst, newPlayers0 = 
-        match m.bsm_whenWillHitTheNet with
-        | None ->
-          b, score, nextServiceIsFirst, newPlayers0
-        | Some hnr ->
-          if newTimer > hnr.hnr_t then
-            (playSoundId ~sounds ~id:SoundHitNet;
-
-             bounceAgainstNetOrWall ~b ~z:0.0 ~score ~s:m ~nextServiceIsFirst ~players:newPlayers0)
-          else
-            b, score, nextServiceIsFirst, newPlayers0
-      in
-      match b.b_state with 
-      | BS_Still _ -> 
-        score, b, nextServiceIsFirst, newPlayers0
-
-      | BS_Moving m ->
-
-        let curP = curBallPos b in
-
-        let b, score , nextServiceIsFirst, newPlayers0 = 
-          if curP.z3 < upperBound then
-            (playSoundId ~sounds ~id:SoundHitBorder;
-             bounceAgainstNetOrWall ~b ~z:upperBound ~score ~s:m ~nextServiceIsFirst ~players:newPlayers0)
-
-          else
-            b, score, nextServiceIsFirst, newPlayers0
-        in
-        match b.b_state with 
-        | BS_Still _ -> score, b, nextServiceIsFirst, newPlayers0
-
-        | BS_Moving m ->
-
-          let b, score, nextServiceIsFirst, newPlayers0 = 
-            let curP = curBallPos b in
-            if curP.z3 > lowerBound then
-              (playSoundId ~sounds ~id:SoundHitBorder;
-               bounceAgainstNetOrWall ~b ~z:lowerBound ~score ~s:m ~nextServiceIsFirst ~players:newPlayers0)
-            else
-              b, score, nextServiceIsFirst, newPlayers0
-          in
-
-          (score, b, nextServiceIsFirst, newPlayers0)
-
 
 (* TODO: Move to ComputerPlayerModule *)
 let startServiceComputer ~scoreIsEven ~h = 
@@ -474,7 +203,7 @@ let startServiceComputer ~scoreIsEven ~h =
 
   (state,  obj, umd)
 
-(* FIXM: These next two types are not being used *)
+(* FIXME: These next two types are not being used *)
 type decreaseLenResult = DLR_ErrorInsufficientPowerToSurpassNet
                        | DLR_Ok of float | DLR_ErrorCountReachedZero
 
@@ -587,17 +316,6 @@ let _ =
     GlFunc.alpha_func `greater ~ref:0.0 ;
     (* 	      GlTex.parameter ~target:`texture_1d (`wrap_s `clamp); *)
     (* 	      GlTex.parameter ~target:`texture_1d (`wrap_t `clamp); *)
-    let resizeCallback w h =
-      print_endline "resizeCallback";
-      let aspectRatio = float_of_int w /. float_of_int h in
-      GlDraw.viewport ~x:0 ~y:0 ~w ~h;
-      GlMat.mode `projection;
-      GlMat.load_identity ();
-      GluMat.perspective ~fovy:fovY ~aspect:aspectRatio ~z:(zNear,  20000.0);
-      GlMat.mode `modelview;
-      GlMat.load_identity ();
-      (w, h)
-    in
 
     let windowWt, windowHt = resizeCallback windowWt windowHt in
     (*Load textures*)
@@ -681,203 +399,10 @@ let _ =
 
 
     (** Main loop starts here! **)
-    let rec mainLoop ~players ~ball ~score ~timer ~nextServiceIsFirst   ~vd =
+    let rec mainLoop ~players ~ball ~score ~timer ~nextServiceIsFirst ~vd =
+      let vd = manageAllPendingSdlEvents ~vd ~windowHt ~windowWt in
 
-      (** Processes the queue of pending IO (mostly mouse and key) events **)
-      (** This could be put on a different file, right? **)
-      let rec manageAllPendingSdlEvents vd =
-
-        let nextEvent = Sdlevent.poll () in
-
-        match nextEvent with
-        | None -> vd
-        | Some e ->
-          begin
-            match e with
-            | Sdlevent.QUIT ->
-              print_endline "Exiting";
-              {vd with vd_mustQuit = true}
-            | Sdlevent.KEYDOWN k ->
-              let vd' = 
-                if k.keysym = Sdlkey.KEY_MINUS then
-
-                  {vd with vd_slowMotionFactor = vd.vd_slowMotionFactor -. 0.1}
-
-                else if k.keysym = Sdlkey.KEY_0 then
-                  { vd with vd_slowMotionFactor = 
-                              min 1.0 ( vd.vd_slowMotionFactor +. 0.1)}
-
-
-                else if k.keysym = Sdlkey.KEY_ESCAPE then
-                  begin
-                    print_endline "Exiting";
-                    {vd with vd_mustQuit = true}
-                  end
-                else if k.keysym = Sdlkey.KEY_p then
-                  if vd.vd_pausedWithKey then
-                    ( print_endline "Resuming";
-                      { vd with vd_pausedWithKey = false})
-                  else
-                    ( print_endline "Pausing";
-                      { vd with vd_pausedWithKey = true})
-                else if k.keysym = Sdlkey.KEY_f then
-
-                  if vd.vd_fullScreen then
-
-                    let _ = Sdlwm.toggle_fullscreen () in
-                    ( Sdlmouse.show_cursor true;
-                      Sdlwm.grab_input false;
-                      Sdlwm.set_caption ~title:pressGMessage ~icon:freeTennisString;
-                      {vd with vd_fullScreen = false})
-
-                  else
-                    (* I may have or not have the grab *)
-                    let _ = Sdlwm.toggle_fullscreen () in
-                    ( Sdlmouse.show_cursor false;
-                      Sdlwm.grab_input true;
-                      Sdlwm.set_caption ~title:freeTennisString ~icon:freeTennisString;
-                      {vd with vd_fullScreen = true})
-
-
-                else if k.keysym = Sdlkey.KEY_g then
-
-                  let full = 
-                    if Sdlwm.query_grab () then
-                      (* removing the grab and the fullscreen *)
-                      (Sdlwm.grab_input false;
-                       Sdlmouse.show_cursor true;
-                       Sdlwm.set_caption ~title:pressGMessage ~icon:freeTennisString;
-                       if vd.vd_fullScreen then
-                         let _ = Sdlwm.toggle_fullscreen () in
-                         false
-                       else
-                         false
-                      )
-                    else
-                      ( Sdlwm.grab_input true;
-                        Sdlmouse.show_cursor false;
-                        Sdlwm.set_caption ~title:freeTennisString ~icon:freeTennisString;
-                        vd.vd_fullScreen )
-
-                  in
-                  { vd with vd_fullScreen = full}
-
-                else
-                  vd
-              in
-              manageAllPendingSdlEvents vd'
-
-            | Sdlevent.VIDEORESIZE (w, h) ->
-              print_endline ( "Video resized" ^ string_of_int w ^
-                              ", " ^ string_of_int h);
-              let w, h = resizeCallback w h in
-              manageAllPendingSdlEvents {vd with vd_windowWt = w;
-                                                 vd_windowHt =  h}
-            | Sdlevent.MOUSEBUTTONDOWN m ->
-              let mouse =
-                if m.mbe_button = Sdlmouse.BUTTON_LEFT then
-                  { vd.vd_mouse with m_leftButtonPressed = true}
-                else if m.mbe_button = Sdlmouse.BUTTON_RIGHT then
-                  { vd.vd_mouse with m_rightButtonPressed = true}
-                else
-                  vd.vd_mouse
-              in
-              manageAllPendingSdlEvents {vd with vd_mouse = mouse}
-            | Sdlevent.MOUSEBUTTONUP m ->
-              let mouse =
-                if m.mbe_button = Sdlmouse.BUTTON_LEFT then
-                  { vd.vd_mouse with m_leftButtonPressed = false}
-                else if m.mbe_button = Sdlmouse.BUTTON_RIGHT then
-                  { vd.vd_mouse with m_rightButtonPressed = false}
-                else
-                  vd.vd_mouse
-              in
-              manageAllPendingSdlEvents {vd with vd_mouse = mouse}
-            | Sdlevent.ACTIVE e ->
-              manageAllPendingSdlEvents vd
-
-            | Sdlevent.MOUSEMOTION m ->
-
-              if m.mme_xrel = 0 && m.mme_yrel =0 then
-                (* @@ why does this happen sometimes? *)
-                manageAllPendingSdlEvents 
-                  {vd with vd_mouse = { vd.vd_mouse with
-                                        m_xRel = 0;
-                                        m_yRel = 0;
-                                        m_secondsSinceLastMouseMotion = 0.0}}
-              else
-
-                let warpx =
-                  if m.mme_x > windowWt - 20 then
-                    Some 20
-                  else if m.mme_x < 20 then
-                    Some (windowWt - 20)
-                  else
-                    None
-                in
-                let warpy =
-                  if m.mme_y > windowHt - 20 then
-                    Some 20
-                  else if m.mme_y < 20 then
-                    Some (windowHt - 20)
-                  else
-                    None
-                in
-                if Sdlwm.query_grab () then
-                  begin
-                    match warpx with
-                    | None ->
-                      begin
-                        match warpy with
-                        | None -> ()
-                        | Some y ->
-                          Sdlmouse.warp m.mme_x y
-                      end
-                    | Some x ->
-                      begin
-                        match warpy with
-                        | None ->
-                          Sdlmouse.warp x m.mme_y
-                        | Some y ->
-                          Sdlmouse.warp x y
-                      end
-                  end
-                else
-                  ();
-
-                let mouse =
-                  if Sdlwm.query_grab () then
-                    let xr =
-                      if abs m.mme_xrel < windowWt - 50 then
-                        m.mme_xrel
-                      else
-                        vd.vd_mouse.m_xRel 
-                    in
-                    let yr =
-                      if abs m.mme_yrel < windowHt - 50 then
-                        m.mme_yrel
-                      else
-                        vd.vd_mouse.m_yRel 
-                    in
-                    {vd.vd_mouse with m_xRel = xr;
-                                      m_yRel = yr;
-                                      m_secondsSinceLastMouseMotion = 0.0} 
-                  else
-                    vd.vd_mouse
-                in
-                manageAllPendingSdlEvents {vd with vd_mouse = mouse}
-            | JOYAXISMOTION _ | JOYBALLMOTION _ | JOYHATMOTION _ | JOYBUTTONDOWN _ | JOYBUTTONUP _
-            | SYSWM  | VIDEOEXPOSE  | USER _ | KEYUP _ ->
-              manageAllPendingSdlEvents vd
-          end
-
-      in (* manageAllPendingSdlEvents *)
-
-      let vd = 
-
-        manageAllPendingSdlEvents vd
-      in
-
+      (* FIXME: Why isn't this part of manageAllPendingSdlEvents ? *)
       let vd = 
         if Sdlkey.is_key_pressed Sdlkey.KEY_i then
           if vd.vd_deltaCamera < 42.0 then
@@ -892,10 +417,7 @@ let _ =
         else
           vd
       in
-
-
       (* send and receive quit state *)
-
       (match serverData with
        |   NeitherServerNorClient -> 
          ()
@@ -937,7 +459,6 @@ let _ =
         | Server (_, inc, _) ->
           ( Marshal.from_channel inc : bool)
       in
-
 
       if mustQuit then
         ()
@@ -1293,8 +814,30 @@ let _ =
             if vd.vd_pausedWithKey || pausedOnTheOtherSide then
               score, ball, nextServiceIsFirst, players
             else
-              updateBall ~b:ball ~dt ~score ~surf:surface ~sounds ~nextServiceIsFirst ~opt ~players in
-
+              let letComputerKnowHeWon ~p 
+                    ~siolpwhtb (* scoreIndexOfLastPlayerWhoHitTheBall *) 
+                    ~players = 
+                match p with 
+                | CP c ->
+                  if c.cp_scoreIndex = siolpwhtb then
+                    let pwa, pws = 
+                      let opponentCurPos = 
+                        let mOpp = pick (Array.to_list players) (fun x -> scoreIndex x != c.cp_scoreIndex) in
+                        match mOpp with
+                        | None -> assert false
+                        | Some opp -> curPosOfPlayer opp 
+                      in
+                      updateMemoryOfPointsWonAndLost ~p:c ~won:true ~opponentCurPos
+                    in
+                    CP {c with cp_pointsWonAttacking = pwa;
+                        cp_pointsWonStayingBack = pws}
+                  else
+                    p
+                | HP _ -> p
+              in
+              updateBall ~b:ball ~dt ~score ~surf:surface ~sounds 
+                      ~nextServiceIsFirst ~opt ~players ~letComputerKnowHeWon
+          in
           renderCourt ~surfaceType:surface.s_material 
             ~surfaceFileName:surfaceFileName ~handleOfTexture:handleOfTexture;
 

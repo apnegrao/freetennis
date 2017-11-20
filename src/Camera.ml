@@ -1,6 +1,10 @@
 open Math
 open SharedData
 
+(** --- Consts --- **)
+let fovY = 16.9 (* increase the fov, and the upper player will be smaller with respect to the lower *)
+let zNear = 100.0
+
 (** --- Data Types --- **)
 type cameraXBehavior = BehindThePlayer | Fixed | PushScroll
 
@@ -10,7 +14,21 @@ type cameraPositionAndDirection = {
 }
 
 (** --- Functions --- **)
-(* TODO: Actually, there's only one function; maybe some refactoring is needed *)
+(* TODO: This is not exactly Camera related, but Screen related. Maybe this file should
+be renamed to Screen.ml and all code related with screen stuff (including the Camera)
+would be placed in here *)
+let resizeCallback w h =
+  print_endline "resizeCallback";
+  let aspectRatio = float_of_int w /. float_of_int h in
+  GlDraw.viewport ~x:0 ~y:0 ~w ~h;
+  GlMat.mode `projection;
+  GlMat.load_identity ();
+  GluMat.perspective ~fovy:fovY ~aspect:aspectRatio ~z:(zNear,  20000.0);
+  GlMat.mode `modelview;
+  GlMat.load_identity ();
+  (w, h)
+
+(* TODO: The rest of the file is a single function; maybe some refactoring is needed *)
 let calculateCamera ~fovy ~fovx ~znear ~posBottomPlayer ~posTopmostPlayer ~deltaCameraBackwards
     ~posBall ~xCamBehav  ~mustShowBottomCourtLine = 
 

@@ -1,6 +1,7 @@
 open Math
 open SharedData
 open Objects3D
+open Sound
 
 (** ----- Data Types ----- **)
 type trajectory = {
@@ -376,3 +377,253 @@ let createRunningBall ~traj ~scoreIndexOfLastPlayerWhoHit ~polyBall
     b_shadowPolygon = polyShadow;
 
     b_siolpwhtb = scoreIndexOfLastPlayerWhoHit}
+
+(*
+Let's see what this method actually does.
+b:	The ball (type ball)
+dt:	Seconds since last frame (see calcDt)
+score:	The score (type score)
+surf:	Surface
+sounds:	The sounds to be played during the game (type sounds)
+nextServiceIsFirst:	A boolean indicating if the next service is a first service
+opt:	I'm not sure what this is and I think it isn't used. By the name I'd guess this is the 'options' data type
+players:	The players array
+@returns:	A tuple (score, ball, nextServiceIsFirst, players)
+*)
+let updateBall ~b ~dt ~score ~surf ~sounds ~nextServiceIsFirst ~opt ~players ~letComputerKnowHeWon = 
+  match b.b_state with
+  | BS_Still _ -> 
+    score, b, nextServiceIsFirst, players
+
+  | BS_Moving m ->
+    let newTimer = dt +. m.bsm_curTimer in
+
+    let b = 
+      let newm = { m with bsm_curTimer = newTimer} in
+      {b with b_state = BS_Moving newm} in
+    let incScore p s  = 
+      assert (p = 0 || p = 1);
+      let opponent x = 1-x in
+      let incPair p arr = 
+        if p = 0 then
+          [| arr.(0) +1 ; arr.(1) |]
+        else
+          [| arr.(0) ; arr.(1)+1 |]
+      in
+      match s.sc_state with
+
+      | TieBreak points -> 
+        let newPoints = incPair p points in
+        if newPoints.(p) >=7 && newPoints.(p) > newPoints.(opponent p) +1 then
+          let newSets = (incPair p    [|6; 6 |]   )::s.sc_finishedSets in
+
+          { sc_state = NoTieBreak {points= [|0;0|]; games=[|0;0|]};
+            sc_finishedSets = newSets }
+        else
+          { s with sc_state =  TieBreak newPoints}
+
+      | NoTieBreak n ->
+
+        let rec normalize p = 
+          if p.(0) > 3 && p.(1) > 3 then
+            normalize [| p.(0) -1 ;  p.(1) -1 |]
+          else
+            p
+        in
+
+
+        let newPoints = normalize (incPair p n.points) in
+        if newPoints.(p) > 3 && newPoints.(p) > newPoints.(opponent p)+1 then
+          let newGames = incPair p n.games in
+          if newGames.(p) >= 6 && newGames.(p) > newGames.(opponent p) + 1 then
+            { sc_state = NoTieBreak {points= [|0;0|]; games=[|0;0|]};
+              sc_finishedSets = newGames::s.sc_finishedSets }
+          else if newGames.(p) = 6 && newGames.(opponent p) = 6 then
+            { s with sc_state = TieBreak  [|0;0|]}
+          else
+            { s with sc_state = NoTieBreak {points= [|0;0|]; games=newGames}}
+        else
+          { s with sc_state = NoTieBreak { n with points= newPoints}}
+
+    in
+    let score, b, nextServiceIsFirst, newPlayers0  = 
+      if newTimer <= m.bsm_whenWillItBounce then
+        score, b, nextServiceIsFirst, players
+      else
+        let bounceOnGround ~b ~s ~score ~surf ~nextServiceIsFirst = 
+          let newBounceCount = s.bsm_bouncesSoFar +1 in 
+
+          let (newScore, isGoodSoFar, nextServiceIsFirst, newPlayers) = 
+            if newBounceCount = 1 then
+              match s.bsm_trajectory.targetRect with
+              | None ->
+                score, false, true, players
+              | _ ->
+
+                let isIn = theTrajectoryFallsInTheTargetRect s.bsm_trajectory in
+                if isIn then
+                  ( score, true, true, players)
+                else
+                  ( playSoundId ~sounds ~id:SoundFault;
+
+                    if s.bsm_lastShotWasAService && nextServiceIsFirst then
+                      (score, false, false, players)
+                    else
+                      let s' = incScore (1-b.b_siolpwhtb) score in
+
+                      s' ,false, true , players
+                  )
+
+            else if newBounceCount = 2 then
+              if s.bsm_isItGoodSoFar then
+                let s' = incScore b.b_siolpwhtb score  in
+                let pl' = 
+                  (* 					  print_endline ("bounceOnGround: inform computer he has won"); *)
+
+                  Array.map (fun p -> letComputerKnowHeWon ~p
+                                ~siolpwhtb:b.b_siolpwhtb ~players)
+                    players
+                in
+                ( s' ,false, true, pl')
+              else
+                (score, false, nextServiceIsFirst, players)
+            else
+              ( score, false, nextServiceIsFirst, players)
+
+          in
+          let newTraj = 
+            let curV = curBallVel s in
+            let whereBounce = whereWillItBounce s.bsm_trajectory in
+
+            { impact = vec3dCreate whereBounce.x2 0.0 whereBounce.z2 ;
+              startVel = vec3dCreate (curV.x3 /. surf.s_velXZAttenuationFactor)
+                  (-.(curV.y3 /. surf.s_velYAttenuationFactor) )
+                  (curV.z3 /. surf.s_velXZAttenuationFactor) ;
+              spin = vec3dCreate (s.bsm_trajectory.spin.x3 /. surf.s_spinAttenuationFactor)
+                  (s.bsm_trajectory.spin.y3 /. surf.s_spinAttenuationFactor)
+                  (s.bsm_trajectory.spin.z3 /. surf.s_spinAttenuationFactor);
+              targetRect = None   }
+          in
+
+          let newState =   
+            if newTraj.startVel.y3 < 120.0 then
+              BS_Still newTraj.impact
+            else
+              let bo = whenWillItBounce newTraj in
+              BS_Moving { bsm_trajectory = newTraj;
+                          bsm_isItGoodSoFar = isGoodSoFar;
+                          bsm_curTimer = 0.0;
+                          bsm_whenWillItBounce = bo;
+                          bsm_lastShotWasAService = m.bsm_lastShotWasAService;
+                          bsm_whenWillHitTheNet = whenWillTheTrajectoryHitTheNet newTraj;
+                          bsm_bouncesSoFar = newBounceCount}
+          in
+
+
+          (newScore, { b with b_state = newState }, nextServiceIsFirst, newPlayers)
+
+        in (* end bounceOnGround *)
+
+        playSoundId  ~sounds ~id:SoundBounce;
+        bounceOnGround ~b ~s:m ~score ~surf ~nextServiceIsFirst
+    in
+
+    match b.b_state with 
+    | BS_Still _ -> score, b, nextServiceIsFirst, newPlayers0
+
+    | BS_Moving m ->
+
+      let bounceAgainstNetOrWall ~b ~z ~score ~s ~nextServiceIsFirst ~players = 
+        let score', nextServiceIsFirst, newPlayers = 
+          if s.bsm_bouncesSoFar = 0 then
+            if nextServiceIsFirst && s.bsm_lastShotWasAService then
+              score, false, players
+            else
+              let s' = incScore (1 - b.b_siolpwhtb) score in
+              s', true, players
+          else if s.bsm_bouncesSoFar = 1 && s.bsm_isItGoodSoFar then
+            let s' = incScore b.b_siolpwhtb score in
+            let pl' = 
+              (* 					print_endline ("bounceAgainstNetOrWall: inform computer he has won"); *)
+              Array.map (fun p -> letComputerKnowHeWon ~p
+                            ~siolpwhtb:b.b_siolpwhtb ~players)
+                players
+
+            in
+            s', true, pl'
+          else
+            score, nextServiceIsFirst, players
+        in
+
+        let curV = curBallVel s in
+        let newVel = vec3dCreate (curV.x3 /. 8.0) (curV.y3 /. 4.0) (-. curV.z3
+                                                                       /. 8.0) in
+
+        let curP = curBallPos b in
+        let newImpact = 
+          if newVel.z3 > 0.0 then
+            vec3dCreate curP.x3 curP.y3 (z +. 2.0)
+          else
+            vec3dCreate curP.x3 curP.y3 (z -. 2.0) in
+
+        let newTraj = { impact = newImpact;
+                        startVel = newVel;
+                        spin = vec3dNull ;
+                        targetRect = None
+                      } in
+        let s' = { bsm_bouncesSoFar = s.bsm_bouncesSoFar +1 ;
+                   bsm_isItGoodSoFar = false;
+                   bsm_trajectory = newTraj;
+                   bsm_lastShotWasAService = s.bsm_lastShotWasAService;
+                   bsm_curTimer = 0.0;
+                   bsm_whenWillItBounce = whenWillItBounce newTraj;
+                   bsm_whenWillHitTheNet = whenWillTheTrajectoryHitTheNet newTraj } in
+
+        let b' = { b with  b_state= BS_Moving s' } in
+        (b', score', nextServiceIsFirst, newPlayers)
+
+      in
+
+      let b, score, nextServiceIsFirst, newPlayers0 = 
+        match m.bsm_whenWillHitTheNet with
+        | None ->
+          b, score, nextServiceIsFirst, newPlayers0
+        | Some hnr ->
+          if newTimer > hnr.hnr_t then
+            (playSoundId ~sounds ~id:SoundHitNet;
+
+             bounceAgainstNetOrWall ~b ~z:0.0 ~score ~s:m ~nextServiceIsFirst ~players:newPlayers0)
+          else
+            b, score, nextServiceIsFirst, newPlayers0
+      in
+      match b.b_state with 
+      | BS_Still _ -> 
+        score, b, nextServiceIsFirst, newPlayers0
+
+      | BS_Moving m ->
+
+        let curP = curBallPos b in
+
+        let b, score , nextServiceIsFirst, newPlayers0 = 
+          if curP.z3 < upperBound then
+            (playSoundId ~sounds ~id:SoundHitBorder;
+             bounceAgainstNetOrWall ~b ~z:upperBound ~score ~s:m ~nextServiceIsFirst ~players:newPlayers0)
+
+          else
+            b, score, nextServiceIsFirst, newPlayers0
+        in
+        match b.b_state with 
+        | BS_Still _ -> score, b, nextServiceIsFirst, newPlayers0
+
+        | BS_Moving m ->
+
+          let b, score, nextServiceIsFirst, newPlayers0 = 
+            let curP = curBallPos b in
+            if curP.z3 > lowerBound then
+              (playSoundId ~sounds ~id:SoundHitBorder;
+               bounceAgainstNetOrWall ~b ~z:lowerBound ~score ~s:m ~nextServiceIsFirst ~players:newPlayers0)
+            else
+              b, score, nextServiceIsFirst, newPlayers0
+          in
+
+          (score, b, nextServiceIsFirst, newPlayers0)

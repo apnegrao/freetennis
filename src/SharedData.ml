@@ -235,3 +235,11 @@ module DirectionMap = Map.Make (struct
          | Right -> 0 )
   end )
 
+(** ------ Score ------ *)
+type noTie = {points: int array; games: int array}
+
+type scoreState = TieBreak of int array | NoTieBreak of noTie
+
+type score = { sc_state: scoreState;
+               sc_finishedSets: (int array) list }
+
