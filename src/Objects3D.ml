@@ -34,14 +34,12 @@ type obj3d = {
 let vertexCreate x y z u v = {vertX = x; vertY = y; vertZ=z; vertU=u; vertV=v}
 
 let renderPolygon p maybePos = 
-  if not p.polyVisible then
-    ()
+  if not p.polyVisible then ()
   else
     begin
       GlDraw.color ~alpha:p.polyColor.a (p.polyColor.r, p.polyColor.g,
                                          p.polyColor.b);
       Gl.enable `depth_test;
-
       begin
         match maybePos with
         | None -> ()
@@ -54,11 +52,10 @@ let renderPolygon p maybePos =
       GlTex.bind_texture ~target:`texture_2d p.polyTextureHandle;
       Gl.enable `texture_2d;
       GlDraw.begins `triangle_fan;
-
       let foo v =
         GlTex.coord2 (v.vertU, v.vertV) ;
-        GlDraw.vertex3 ( v.vertX, v.vertY ,v.vertZ ) in
-
+        GlDraw.vertex3 ( v.vertX, v.vertY ,v.vertZ )
+      in
       List.iter foo p.polyVerts;
       GlDraw.ends ();
       match maybePos with
@@ -67,28 +64,29 @@ let renderPolygon p maybePos =
     end
 
 let renderObj3d ~o ~handleOfTexture ~pos ~flipX ~color=
-
   let curFram = 
     let frames = 
       let a = 
         try
           StringMap.find o.o3d_curAnimName o.o3d_animations 
         with Not_found ->
-          ( print_endline ("animation Not_found:" ^ o.o3d_curAnimName); raise Not_found)
+          ( print_endline ("animation Not_found:" ^ o.o3d_curAnimName);
+            raise Not_found)
       in
       match a with
       | RunAnimation x -> x
       | ServiceAnimation x -> x.serviceAnim_ArrayOfFrames
-      | ShotAnimation x -> x.shotAnim_ArrayOfFrames in
-    frames.(o.o3d_curFrameIdx) in
+      | ShotAnimation x -> x.shotAnim_ArrayOfFrames
+    in
+    frames.(o.o3d_curFrameIdx)
+  in
   let texHandle =
     try
       StringMap.find curFram.animFrameTexture handleOfTexture  
     with Not_found ->
-      ( print_endline ("texture  Not_found:" ^ curFram.animFrameTexture); raise Not_found)
+      (print_endline (
+          "texture  Not_found:" ^ curFram.animFrameTexture); raise Not_found)
   in
-
-
   let vs, vsShad, vShad2 = 
     let w = curFram.animFrameDimensionsOfRect.x2 *. sizeOfAPixelInCm in
     let h = curFram.animFrameDimensionsOfRect.z2 *. sizeOfAPixelInCm in
@@ -96,45 +94,42 @@ let renderObj3d ~o ~handleOfTexture ~pos ~flipX ~color=
     let hz = curFram.animFrameHotSpot.z2 *. sizeOfAPixelInCm in
     let hz2 = hz *. 2.0 in
     let h2 = h *. 2.0 in
-
     let flipSign = if flipX then -. 1.0 else 1.0 in
     ( [ vertexCreate (flipSign *. (-. hx))  hz 0.0 0.0 0.0 ;
         vertexCreate (flipSign *. (w -. hx))   hz 0.0 1.0 0.0;
         vertexCreate  (flipSign *.( w -. hx)) ( -. h +. hz) 0.0 1.0 1.0; 
-        vertexCreate (flipSign *. (-. hx))  (-. h +. hz) 0.0 0.0 1.0 ] ,
-
-      [ vertexCreate ((flipSign *. (-. hx)) +. 100.0)      0.5   hz2              0.0 0.0 ;
-        vertexCreate ((flipSign *. (w -. hx)) +. 100.0)    0.5   hz2              1.0 0.0;
-        vertexCreate  (flipSign *.( w -. hx))   0.5   ( -. h2 +. hz2)   1.0 1.0; 
-        vertexCreate (flipSign *. (-. hx))      0.5   (-. h2 +. hz2)    0.0 1.0
-
+        vertexCreate (flipSign *. (-. hx))  (-. h +. hz) 0.0 0.0 1.0
       ],
-      [ vertexCreate ((flipSign *. (-. hx)) -. 100.0)      0.5   hz2              0.0 0.0 ;
-        vertexCreate ((flipSign *. (w -. hx)) -. 100.0)    0.5   hz2              1.0 0.0;
-        vertexCreate  (flipSign *.( w -. hx))   0.5   ( -. h2 +. hz2)   1.0 1.0; 
-        vertexCreate (flipSign *. (-. hx))      0.5   (-. h2 +. hz2)    0.0 1.0
-
+      [ vertexCreate ((flipSign *. (-. hx)) +. 100.0) 0.5 hz2 0.0 0.0 ;
+        vertexCreate ((flipSign *. (w -. hx)) +. 100.0) 0.5 hz2 1.0 0.0;
+        vertexCreate  (flipSign *.( w -. hx)) 0.5 (-. h2 +. hz2) 1.0 1.0; 
+        vertexCreate (flipSign *. (-. hx)) 0.5 (-. h2 +. hz2) 0.0 1.0
+      ],
+      [ vertexCreate ((flipSign *. (-. hx)) -. 100.0) 0.5 hz2 0.0 0.0 ;
+        vertexCreate ((flipSign *. (w -. hx)) -. 100.0) 0.5 hz2 1.0 0.0;
+        vertexCreate  (flipSign *.( w -. hx)) 0.5 (-. h2 +. hz2) 1.0 1.0; 
+        vertexCreate (flipSign *. (-. hx)) 0.5 (-. h2 +. hz2) 0.0 1.0
       ])
   in
-  let pol = { polyTextureHandle = texHandle ;
-              polyVerts = vs;
-              polyColor = { r = color.r; g = color.g; b = color.b; a = color.a};
-              polyVisible = true
-            } in
-
-  let polShad = {pol with
-                 polyColor = { r = 0.0; g = 0.0 ; b = 0.0; a = shadowIntensity};
-                 polyVerts   = vsShad;
-                } in
+  let pol = 
+  { polyTextureHandle = texHandle ;
+    polyVerts = vs;
+    polyColor = { r = color.r; g = color.g; b = color.b; a = color.a};
+    polyVisible = true
+  }
+  in
+  let polShad =
+  { pol with polyColor = { r = 0.0; g = 0.0 ; b = 0.0; a = shadowIntensity};
+    polyVerts   = vsShad;
+  }
+  in
   (*     let polShad2 = {pol with *)
   (* 		       polyColor = { r = 0.0; g = 0.0 ; b = 0.0; a = 0.3}; *)
   (* 		       polyVerts   = vShad2; *)
   (* 		  } in *)
-
   ( renderPolygon pol pos;
     renderPolygon polShad pos;
     (*       renderPolygon polShad2 pos *)
-
   )
 
 let create3dObj ~dirs ~initialAnim =
@@ -146,8 +141,10 @@ let create3dObj ~dirs ~initialAnim =
           let filesWithIndices =
             let files =
               let notCVS x =
-                0 != (compare x "CVS") in
-              List.sort compare (List.filter notCVS (Array.to_list  (Sys.readdir d))) in
+                0 != (compare x "CVS")
+              in
+              List.sort compare (List.filter notCVS (Array.to_list (Sys.readdir d)))
+            in
             if  List.length files != Array.length times then
               (print_endline (d);
                assert(false))
@@ -156,17 +153,19 @@ let create3dObj ~dirs ~initialAnim =
             let rec filesWithIndicesAux l next =
               match l with
               | [] -> []
-              | h::t -> (h,next)::(filesWithIndicesAux t (next + 1)) in
-            filesWithIndicesAux files 0 in
+              | h::t -> (h,next)::(filesWithIndicesAux t (next + 1))
+            in
+            filesWithIndicesAux files 0
+          in
           let animFrameOfFile (scalex, scaley) (f, i) =
             let s = GdkPixbuf.from_file (d^"/"^f) in
             let findTheHotSpot s =
               let hotspots =
-
                 let pairs =
                   let l1 = listFromTo 0 (GdkPixbuf.get_width s) in
                   let l2 = listFromTo 0 (GdkPixbuf.get_height s) in
-                  allPairs l1 l2 in
+                  allPairs l1 l2
+                in
                 let isHotspot (x, y) =
                   let r, g, b, a =
                     let getpixel x y s =
@@ -186,46 +185,53 @@ let create3dObj ~dirs ~initialAnim =
                         (Gpointer.get_byte pixels ~pos:offs,
                          Gpointer.get_byte pixels ~pos:(offs + 1),
                          Gpointer.get_byte pixels ~pos:(offs + 2),
-                         Gpointer.get_byte pixels ~pos:(offs + 3) )in
-                    getpixel x y s in
-                  r = 255 && g = 0 && b = 255 && a = 255 (* needed! Transparent pixels still have colors, and that
-                                                           											       color could be magenta *) in
-                List.filter  isHotspot pairs in
+                         Gpointer.get_byte pixels ~pos:(offs + 3) )
+                    in
+                    getpixel x y s
+                  in
+                  (* needed! Transparent pixels still have colors, and that
+                  color could be magenta *)
+                  r = 255 && g = 0 && b = 255 && a = 255
+                in
+                List.filter  isHotspot pairs
+              in
               match hotspots with
               | [] -> raise HotSpotNotFound
-              | [x, y] -> vec2dCreate (scalex *.(float_of_int x)) ((float_of_int y)*. scaley)
+              | [x, y] -> vec2dCreate (scalex *.(float_of_int x))
+                                      ((float_of_int y)*. scaley)
               | (x,y)::_ ->
-                ( print_endline ( "More than one hotspot found in file " ^ f ^ ". Picking first");
-                  printList hotspots (fun (x, y) ->  "(" ^ string_of_int x ^ "," ^ string_of_int y ^ ")");
-                  vec2dCreate (scalex *. (float_of_int x))  (scaley *. (float_of_int y)))
+                ( print_endline ("More than one hotspot found in file " ^ 
+                                 f ^ ". Picking first");
+                  printList hotspots (fun (x, y) ->  "(" ^ string_of_int x ^ 
+                                      "," ^ string_of_int y ^ ")");
+                  vec2dCreate (scalex *. (float_of_int x))
+                              (scaley *. (float_of_int y)))
             in
             { animFrameDuration = times.(i);
               animFrameTexture = d ^"/"^f;
               animFrameDimensionsOfRect = vec2dCreate
-                  (float_of_int(GdkPixbuf.get_width s) *. scalex)
-                  (float_of_int (GdkPixbuf.get_height s) *. scaley);
-              animFrameHotSpot = (try
-                                    findTheHotSpot s
-                                  with HotSpotNotFound ->
-                                    vec2dCreate ((float_of_int(GdkPixbuf.get_width s)) *. scalex /. 2.0)
-                                      (float_of_int (GdkPixbuf.get_height s) *. scaley)
-                                 )
+                (float_of_int(GdkPixbuf.get_width s) *. scalex)
+                (float_of_int (GdkPixbuf.get_height s) *. scaley);
+              animFrameHotSpot = (
+                try
+                  findTheHotSpot s
+                with HotSpotNotFound ->
+                  vec2dCreate ((float_of_int(GdkPixbuf.get_width s)) *. scalex /. 2.0)
+                              (float_of_int (GdkPixbuf.get_height s) *. scaley)
+              )
             }
           in
-          Array.map (animFrameOfFile (scalex, scaley)) (Array.of_list filesWithIndices)
+          Array.map (animFrameOfFile (scalex, scaley))
+                     (Array.of_list filesWithIndices)
         in
-
         match impactFrame with
         | NoImpactFrame -> (d, RunAnimation arr)
-
         | Service (launch, imp) ->
           let dur =
             let durations =
               let durationOfPair (f, i) =
-                if launch <= i && i <imp then
-                  f.animFrameDuration
-                else
-                  0.0 in
+                if launch <= i && i <imp then f.animFrameDuration else 0.0
+              in
               let pairs =
                 let arrl = Array.to_list arr in
                 List.combine arrl (listFromTo 0 (List.length arrl)) in
@@ -236,19 +242,19 @@ let create3dObj ~dirs ~initialAnim =
                                  serviceAnim_TimeFromLaunchToImpact = dur;
                                  serviceAnim_ArrayOfFrames = arr})
         | NotService imp ->
-
           let dur =
             let durations =
               let durationOfPair (f, i) =
-                if i <imp then
-                  f.animFrameDuration
-                else
-                  0.0 in
+                if i <imp then f.animFrameDuration else 0.0
+              in
               let pairs =
                 let arrl = Array.to_list arr in
-                List.combine arrl (listFromTo 0 (List.length arrl)) in
-              List.map durationOfPair pairs in
-            List.fold_left (+.) 0.0 durations in
+                List.combine arrl (listFromTo 0 (List.length arrl))
+              in
+              List.map durationOfPair pairs
+            in
+            List.fold_left (+.) 0.0 durations
+          in
           (d, ShotAnimation {shotAnim_ArrayOfFrames = arr;
                              shotAnim_FrameOfImpact = imp;
                              shotAnim_TimeFromOpeningToImpact = dur})
@@ -256,9 +262,10 @@ let create3dObj ~dirs ~initialAnim =
       List.map animOfDir  dirs
     in
     let addItemToMap (aName, a) m =
-      StringMap.add aName a m in
-    accumulate ~list:animations ~f:addItemToMap ~state:StringMap.empty in
-
+      StringMap.add aName a m
+    in
+    accumulate ~list:animations ~f:addItemToMap ~state:StringMap.empty
+  in
   { o3d_curFrameIdx = 0;
     o3d_curAnimName = initialAnim;
     o3d_animations = aMap;

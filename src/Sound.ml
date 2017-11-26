@@ -1,6 +1,6 @@
 (** --- Consts --- **)
 let sfxDir = "sfx" (* where the wav files are located.
-                      		      example of customization: /usr/share/freetennis/sounds *)
+                      example of customization: /usr/share/freetennis/sounds *)
 
 (** --- Data Types --- **)
 type soundId = SoundAhh | SoundHff | SoundNormalShot | SoundLightShot | 
@@ -47,15 +47,13 @@ let playSoundId ~id ~sounds =
     let playSound s  = 
       try
         Sdlmixer.play_sound s
-      with Sdlmixer.SDLmixer_exception _ -> 
-        ()
+      with Sdlmixer.SDLmixer_exception _ -> ()
     in
     match id with
     | SoundNormalShot -> playSound sou.sou_normalShot 
     | SoundHff -> playSound sou.sou_hff 
     | SoundSprintJustBegun -> playSound sou.sou_sprint 
-    | SoundSprintCantBegin ->
-      playSound sou.sou_sprintCantBeginOutOfStamina 
+    | SoundSprintCantBegin -> playSound sou.sou_sprintCantBeginOutOfStamina 
     | SoundSprintJustFinished -> playSound sou.sou_sprintCantBeginOutOfStamina 
     | SoundAhh -> playSound sou.sou_ahh 
     | SoundLightShot -> playSound sou.sou_lightShot 

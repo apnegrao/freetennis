@@ -3,8 +3,9 @@ open Camera
 open Sdlevent (* for mme_xrel etc *)
 
 (** --- Consts --- **)
-let pressGMessage = "Press F or G to grab the mouse input. Read the manual for more info! :-)"
-(*These two next strings are not Input related...*)
+let pressGMessage = 
+  "Press F or G to grab the mouse input. Read the manual for more info! :-)"
+(* These two next strings are not Input related...*)
 let loadingString = "Loading... please wait"
 let freeTennisString = "Free Tennis"
 
@@ -12,7 +13,8 @@ let mouseRefresh = 1.0 /. 24.0 (* seconds *)
 
 (** --- Data Types --- **)
 type mouse = {
-  m_rightButtonPressed:bool; m_leftButtonPressed:bool ;
+  m_rightButtonPressed:bool; 
+  m_leftButtonPressed:bool ;
   m_xRel:int; 
   m_yRel:int; 
   m_secondsSinceLastMouseMotion: float
@@ -172,9 +174,7 @@ let rec manageAllPendingSdlEvents ~vd ~windowHt ~windowWt=
       | Sdlevent.KEYDOWN k ->
         let vd' = 
           if k.keysym = Sdlkey.KEY_MINUS then
-
             {vd with vd_slowMotionFactor = vd.vd_slowMotionFactor -. 0.1}
-
           else if k.keysym = Sdlkey.KEY_0 then
             { vd with vd_slowMotionFactor = 
                         min 1.0 ( vd.vd_slowMotionFactor +. 0.1)}
@@ -228,7 +228,6 @@ let rec manageAllPendingSdlEvents ~vd ~windowHt ~windowWt=
             vd
         in
         manageAllPendingSdlEvents vd' windowHt windowWt
-
       | Sdlevent.VIDEORESIZE (w, h) ->
         print_endline ( "Video resized" ^ string_of_int w ^
                         ", " ^ string_of_int h);
@@ -267,20 +266,14 @@ let rec manageAllPendingSdlEvents ~vd ~windowHt ~windowWt=
             windowHt windowWt
         else
           let warpx =
-            if m.mme_x > windowWt - 20 then
-              Some 20
-            else if m.mme_x < 20 then
-              Some (windowWt - 20)
-            else
-              None
+            if m.mme_x > windowWt - 20 then Some 20
+            else if m.mme_x < 20 then Some (windowWt - 20)
+            else None
           in
           let warpy =
-            if m.mme_y > windowHt - 20 then
-              Some 20
-            else if m.mme_y < 20 then
-              Some (windowHt - 20)
-            else
-              None
+            if m.mme_y > windowHt - 20 then Some 20
+            else if m.mme_y < 20 then Some (windowHt - 20)
+            else None
           in
           if Sdlwm.query_grab () then
             begin
@@ -304,16 +297,12 @@ let rec manageAllPendingSdlEvents ~vd ~windowHt ~windowWt=
           let mouse =
             if Sdlwm.query_grab () then
               let xr =
-                if abs m.mme_xrel < windowWt - 50 then
-                  m.mme_xrel
-                else
-                  vd.vd_mouse.m_xRel 
+                if abs m.mme_xrel < windowWt - 50 then m.mme_xrel
+                else vd.vd_mouse.m_xRel 
               in
               let yr =
-                if abs m.mme_yrel < windowHt - 50 then
-                  m.mme_yrel
-                else
-                  vd.vd_mouse.m_yRel 
+                if abs m.mme_yrel < windowHt - 50 then m.mme_yrel
+                else vd.vd_mouse.m_yRel 
               in
               {vd.vd_mouse with m_xRel = xr;
                                 m_yRel = yr;
@@ -322,8 +311,7 @@ let rec manageAllPendingSdlEvents ~vd ~windowHt ~windowWt=
               vd.vd_mouse
           in
           manageAllPendingSdlEvents {vd with vd_mouse = mouse} windowHt windowWt
-      | JOYAXISMOTION _ | JOYBALLMOTION _ | JOYHATMOTION _ | JOYBUTTONDOWN _ | JOYBUTTONUP _
-      | SYSWM  | VIDEOEXPOSE  | USER _ | KEYUP _ ->
+      | JOYAXISMOTION _ | JOYBALLMOTION _ | JOYHATMOTION _ | JOYBUTTONDOWN _ |
+       JOYBUTTONUP _ | SYSWM  | VIDEOEXPOSE  | USER _ | KEYUP _ ->
         manageAllPendingSdlEvents vd windowHt windowWt
     end
-

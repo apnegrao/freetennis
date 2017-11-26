@@ -31,7 +31,7 @@ type vec2d = {x2:float; z2:float}
 
 let isNull2d v = v.x2 = 0.0 && v.z2 = 0.0
 
-let stringOfVec2d v= 
+let stringOfVec2d v = 
   "x = " ^ string_of_float v.x2  ^ ", z = " ^ string_of_float v.z2
 
 let vec2dCreate x z = {x2= x; z2 = z}
@@ -67,8 +67,9 @@ type vec3d = {x3:float; y3:float; z3:float}
 
 let projection2d v = {x2 = v.x3; z2 = v.z3}
 
-let stringOfVec3d v= 
-  "x = " ^ string_of_float v.x3 ^ ", y = " ^ string_of_float v.y3 ^ ", z = " ^ string_of_float v.z3
+let stringOfVec3d v = 
+  "x = " ^ string_of_float v.x3 ^ ", y = " ^ string_of_float v.y3 ^ ", z = "
+  ^ string_of_float v.z3
 
 let vec3dCreate x y z = {x3= x; y3=y; z3 = z}
 
@@ -88,17 +89,11 @@ let vec3dMulScalar s v  =
 (*------Angles------*)
 let smallestAngleBetween v1 v2 = 
   let den = length2d v1 *. length2d v2 in
-  if den = 0.0 then
-    raise NullVector
-  else
-    acos ( ( dotProduct2d v1 v2 ) /. den)
+  if den = 0.0 then raise NullVector else acos ( ( dotProduct2d v1 v2 ) /. den)
 
 let smallestAngleBetween3d v1 v2 = 
   let den = length3d v1 *. length3d v2 in
-  if den = 0.0 then
-    raise NullVector
-  else
-    acos ( ( dotProduct3d v1 v2 ) /. den)
+  if den = 0.0 then raise NullVector else acos ( ( dotProduct3d v1 v2 ) /. den)
 
 let smallestAngleWithZAxis v1 = 
   let zAxis = { x2 = 0.0 ; z2 = 1.0} in
@@ -129,11 +124,11 @@ let straightLineBetween p1 p2 =
   else
     let t =     
       let dz = p2.z2 -. p1.z2 in
-      dz /. dx in
+      dz /. dx 
+    in
     { sl_a = t ; sl_b = -. 1.0 ; sl_c = p1.z2  -. t *. p1.x2 }
 
 let straightLineFromPointAndDir p dir = 
-
   let x0 = p.x2 in
   let a, b, c =
     if dir.x2 = 0.0 then
@@ -148,7 +143,8 @@ let straightLineFromPointAndDir p dir =
 let intersectionOfStraightLines l1 l2 = 
   let d = 
     let a = Matrix2x2.create l1.sl_a l1.sl_b l2.sl_a l2.sl_b in
-    Matrix2x2.det a in
+    Matrix2x2.det a 
+  in
   if d = 0.0 then
     raise ParallelVectors
   else

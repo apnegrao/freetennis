@@ -1,3 +1,6 @@
+(* FIXME: This file is supposed to hold data/functions that are either shared by
+both types of players or needed by multiple other modules (files). Check the
+contents in this file to see which still make sense to be here *)
 open Math
 open SharedData
 open BallMovement
@@ -37,10 +40,8 @@ type playerCommon = {
   pc_secondServiceSpeedKmh:float;
   pc_firstServiceSpin: float;
   pc_secondServiceSpin: float;
-
   pc_tendsToAnticipateGroundShots:bool; 
   pc_prefersVolleysToGroundShots: bool; 
-
   pc_topSpin: float;
   pc_backSpin: float;
   pc_maxSpeedInFreeRunUnderNet:float;
@@ -51,9 +52,10 @@ type playerCommon = {
   pc_exploitationOfOpponentsPower: float;
 }
 
-(* XXX: Why isn't the fatigueData in the playerCommon? I think the playerCommon data are all constants. 
-   Still, why couldn't it also have dynamic data? Not only fatigueData, in fact, there are other
-   variables common to both players: scoreIndex, playsInTopMostHalf*)
+(* XXX: Why isn't the fatigueData in the playerCommon? I think the playerCommon
+data are all constants. Still, why couldn't it also have dynamic data? Not only
+fatigueData, in fact, there are other variables common to both players:
+scoreIndex, playsInTopMostHalf*)
 type fatigueData = {
   fatigueDivisor:float;
   fatigueStep:float;
@@ -70,7 +72,8 @@ type spinKind = Topspin | Backspin
 
 type voleeOrTopspin = VOT_Volee | VOT_NotVolee of spinKind
 
-type voleeOrTopspinAndIntention = VOTI_Volee | VOTI_NotVolee of spinKind * attackIntention
+type voleeOrTopspinAndIntention = VOTI_Volee
+  | VOTI_NotVolee of spinKind * attackIntention
 
 type volleyOrIntention = Volley | NotVolley of attackIntention
 
@@ -90,7 +93,8 @@ type realizingState = Realized | NotRealized
 
 type reasonForDiveMiss = DiveTooLate | DiveOnShotTooFar | DiveWithNoNeed
 
-type diveHasEverBeenPossible = DiveHasBeenPossible | DiveHasNeverBeenPossible | DivePossibilityUnknown
+type diveHasEverBeenPossible = DiveHasBeenPossible
+  | DiveHasNeverBeenPossible | DivePossibilityUnknown
 
 let stringOfAttackIntention a = 
   match a with
@@ -100,7 +104,8 @@ let stringOfAttackIntention a =
 
 let maxSprintCm = 800.0
 
-type attackPolicyNotService = APNS_AttackApproach | APNS_AttackPowerShot | APNS_StayBack
+type attackPolicyNotService = APNS_AttackApproach
+  | APNS_AttackPowerShot | APNS_StayBack
 
 let updateFatigue f newPos = 
   let delta = vec2dSub newPos f.fatiguePreviousPos in
@@ -111,8 +116,7 @@ let updateFatigue f newPos =
   }
 
 let createPlayerCommonData ~plName =
-  {
-    pc_maxShotHt = 
+  { pc_maxShotHt = 
       (match plName with Mats -> 180.0 | Ivan -> 200.0 | Pete -> 200.0);
     pc_maxSmashHt = 
       (match plName with Mats ->300.0 | Ivan ->350.0 | Pete -> 350.0);
@@ -136,19 +140,16 @@ let createPlayerCommonData ~plName =
     pc_maxSpeedInFreeRunUnderNet = 420.0; 
     pc_maxSpeedInNormalResearchUnderNet = 420.0;
     (* Regolare prima lo spin, perche' influenza in modo
-       			     drastico pc_maxShotPower e pc_exploitationOfOpponentsPower.
+      drastico pc_maxShotPower e pc_exploitationOfOpponentsPower.
 
-       			     per capire se il topspin e' troppo alto,
-       			     vedi quanto pagano le palle strette. Se sono
-       			     troppo facili, il topspin e' troppo alto 
+      per capire se il topspin e' troppo alto, vedi quanto pagano le palle
+      strette. Se sono troppo facili, il topspin e' troppo alto poi regola a
+      zero pc_exploitationOfOpponentsPower, cosi' che la forza e' tutta sua.
+      E regola pc_maxShotPower verificando che non possa tirare mazzate a chiudere.
 
-       			     poi regola a zero pc_exploitationOfOpponentsPower, cosi' che la forza e' tutta sua.
-       			     E regola pc_maxShotPower verificando che non possa
-       			     tirare mazzate a chiudere.
-
-       			     Poi aumenta pc_exploitationOfOpponentsPower fino a che le mazzate a 
-       			     chiudere sono possibili quando il colpo dell'altro e' abbast veloce.
-       			  *)
+      Poi aumenta pc_exploitationOfOpponentsPower fino a che le mazzate a 
+      chiudere sono possibili quando il colpo dell'altro e' abbast veloce.
+    *)
     pc_topSpin = 
       (match plName with Mats -> 720.0 | Ivan -> 700.0 | Pete -> 500.0); 
     pc_backSpin = 
@@ -161,9 +162,10 @@ let createPlayerCommonData ~plName =
 
 (**--------------Computer Player---------------- FIXME: Why isn't this on the
    ComputerPlayer Module?**) 
-type researchKindComputer = RKC_Smash of volleyOrIntention
-                          | RKC_Normal of voleeOrTopspinAndIntention 
-                          | RKC_StretchForward of volleyOrIntention
+type researchKindComputer =
+  RKC_Smash of volleyOrIntention
+  | RKC_Normal of voleeOrTopspinAndIntention 
+  | RKC_StretchForward of volleyOrIntention
 
 (* Research After Deciding The Shot *)
 type radts = {
@@ -190,40 +192,43 @@ type rbdts = {
   rbdts_ballVelAtImpact:vec3d
 }
 
-type computerPlayerState =   CPS_ResearchBeforeDecidingTheShot of rbdts
-                         | CPS_ResearchAfterDecidingTheShot of radts
-                         | CPS_GetBackToCenterDuringGame of  volleyOrIntention * 
-                                                             vec2d (* targetPos*) * vec2d (* optimalPosition *)
-                         | CPS_GetBackToCenterAtPointFinished of float (* time to stop *)
-                         | CPS_WaitingForBallToComeTowardsMe
-                         | CPS_WaitingForANewPointToBegin
-                         | CPS_RealizingWhereTheBallIs 
-                         | CPS_TheAnimationIsTerminating of volleyOrIntention
-                         | CPS_ServingBeforeLaunch of bool 
-                         | CPS_ServingAfterLaunchAndBeforeStartingGesture of bool * float (*timer *)
-                         | CPS_ServingAfterStartingGesture of bool  * float (* timer *)
-                         | CPS_ServingAfterHittingBall 
+type computerPlayerState =
+  CPS_ResearchBeforeDecidingTheShot of rbdts
+  | CPS_ResearchAfterDecidingTheShot of radts
+  | CPS_GetBackToCenterDuringGame of  volleyOrIntention * 
+                             vec2d (* targetPos*) * vec2d (* optimalPosition *)
+  | CPS_GetBackToCenterAtPointFinished of float (* time to stop *)
+  | CPS_WaitingForBallToComeTowardsMe
+  | CPS_WaitingForANewPointToBegin
+  | CPS_RealizingWhereTheBallIs 
+  | CPS_TheAnimationIsTerminating of volleyOrIntention
+  | CPS_ServingBeforeLaunch of bool 
+  | CPS_ServingAfterLaunchAndBeforeStartingGesture of bool * float (*timer *)
+  | CPS_ServingAfterStartingGesture of bool  * float (* timer *)
+  | CPS_ServingAfterHittingBall 
 
 
-type computerPlayer = { cp_obj: obj3d; 
-                        cp_pc: playerCommon;
-                        cp_name : playerName;
-                        cp_playsInTopmostCourtHalf: bool;
-                        cp_fatigueData : fatigueData;
-                        cp_scoreIndex:int;
-                        cp_state: computerPlayerState;
-                        cp_pointsWonAttacking: wonLost list;
-                        cp_pointsWonStayingBack: wonLost list;
-                        cp_umd: uniformMotionData;
-                        cp_distanceOfBounceFromLine:float }
+type computerPlayer = {
+  cp_obj: obj3d; 
+  cp_pc: playerCommon;
+  cp_name : playerName;
+  cp_playsInTopmostCourtHalf: bool;
+  cp_fatigueData : fatigueData;
+  cp_scoreIndex:int;
+  cp_state: computerPlayerState;
+  cp_pointsWonAttacking: wonLost list;
+  cp_pointsWonStayingBack: wonLost list;
+  cp_umd: uniformMotionData;
+  cp_distanceOfBounceFromLine:float
+}
 
 let curPosOfComputerPlayer c = 
-  vec2dAdd c.cp_umd.umd_startPos (vec2dMulScalar c.cp_umd.umd_timer c.cp_umd.umd_startVel )
+  vec2dAdd c.cp_umd.umd_startPos 
+            (vec2dMulScalar c.cp_umd.umd_timer c.cp_umd.umd_startVel )
 
 (* small, auxiliary functions for AI decisions. TODO: This is for the computer
    player only, so why is it here?*)
 module AI = struct
-
   let isVeryDecenteredBackwards pos = abs_float pos.z2 > 1500.0 
 
   let isAttacking pos = abs_float pos.z2 < courtHt4 +. 101.0 
@@ -242,7 +247,6 @@ module AI = struct
     match h with
     | Right -> pos.x2 > courtWt2 -. 30.0
     | Left -> pos.x2 < -. courtWt2 +. 30.0
-
 
   let isABitDecenteredHorizontally pos = 
     exists [Left;Right] (fun h -> isABitDecentered h pos )
@@ -263,14 +267,13 @@ module AI = struct
     assert (xSinistra < xDestra);
     let a = 
       if votoXSin <= votoXDes then
-        (abs_float (votoXDes -. votoXSin)) /. (abs_float (xDestra
-                                                          -. xSinistra))
+        (abs_float (votoXDes -. votoXSin)) /. 
+                    (abs_float (xDestra -. xSinistra))
       else
-        -. ( (abs_float (votoXDes -. votoXSin)) /. (abs_float (xDestra
-                                                               -. xSinistra)))
+        -. ((abs_float (votoXDes -. votoXSin)) /. 
+                        (abs_float (xDestra -. xSinistra)))
     in
     votoXSin +. a *. ( x -. xSinistra)
-
 
   let voteClosenessToNet p = 
     let z = abs_float p.z2 in
@@ -320,123 +323,127 @@ end
 (**--------------Human Player----------------**)
 let spinForVolee = -. 2.0 (* @@ discover why 0.0 crashes when I do volee *)
 
-type researchKindHuman = RKH_Smash of bool (* volee *) 
-                       | RKH_Normal of voleeOrTopspin 
-                       | RKH_Dive of bool
-                       | RKH_StretchForward of bool
+type researchKindHuman = 
+  RKH_Smash of bool (* volee *) 
+  | RKH_Normal of voleeOrTopspin 
+  | RKH_Dive of bool
+  | RKH_StretchForward of bool
 
-type ballResearchHuman = 
-  { brh_forehand:bool; (* @@ makes no sense for smash! remove this *)
-    brh_runSpeedBeforeOpening: vec2d;
-    brh_runSpeedAfterOpening: vec2d;
-    brh_researchKind: researchKindHuman ;
-    brh_t1:float;
-    brh_t0:float;
-    brh_tChange:float;
-    brh_ballVelAtImpact:vec3d;
-    brh_impact: vec3d;
-    brh_footTarget: vec2d;
-    brh_modulusOfRunSpeedAtImpactTime:float;
-  }
+type ballResearchHuman = {
+  brh_forehand:bool; (* @@ makes no sense for smash! remove this *)
+  brh_runSpeedBeforeOpening: vec2d;
+  brh_runSpeedAfterOpening: vec2d;
+  brh_researchKind: researchKindHuman ;
+  brh_t1:float;
+  brh_t0:float;
+  brh_tChange:float;
+  brh_ballVelAtImpact:vec3d;
+  brh_impact: vec3d;
+  brh_footTarget: vec2d;
+  brh_modulusOfRunSpeedAtImpactTime:float;
+}
 
 (* Human Player State - Serving After Pressing Button *)
-type hpssapb =
-  {hpssapb_ToTheRight: bool; 
-   hpssapb_AimAngle:float ;
-   hpssapb_Timer: float;
-   hpssapb_pos: vec2d;
-   hpssapb_FirstService: bool
-
-  }
+type hpssapb = {
+  hpssapb_ToTheRight: bool; 
+  hpssapb_AimAngle:float ;
+  hpssapb_Timer: float;
+  hpssapb_pos: vec2d;
+  hpssapb_FirstService: bool
+}
 
 (* Human Player State - Manual Search *)
-type hpsms = {hpsms_pos:vec2d;
-              hpsms_realizing:realizingState;
-              hpsms_askedToSprintInPrevFrame:askData;
-              hpsms_diveIsPossibleNow:divePossibility;
-              hpsms_diveHasEverBeenPossible:diveHasEverBeenPossible}
+type hpsms = {
+  hpsms_pos:vec2d;
+  hpsms_realizing:realizingState;
+  hpsms_askedToSprintInPrevFrame:askData;
+  hpsms_diveIsPossibleNow:divePossibility;
+  hpsms_diveHasEverBeenPossible:diveHasEverBeenPossible
+}
 
 (* Automatic Search After Opening *)
-type asao = 
-  { asao_BallVelAtImpact:vec3d;
-    asao_HtOverNet: float;
-    asao_Impact: vec3d;
-    asao_FootTarget: vec2d;
-    asao_ModulusOfRunSpeedAtImpactTime: float;
-    asao_CurAim: vec2d;
-    asao_UniformMotionData : uniformMotionData;
-    asao_TimeToRunFromOpeningToImpact: float;
-    asao_RunSpeedFromOpeningToImpact: vec2d;
-    asao_Forehand: bool;
-    asao_researchKind: researchKindHuman
-  }
+type asao = {
+  asao_BallVelAtImpact:vec3d;
+  asao_HtOverNet: float;
+  asao_Impact: vec3d;
+  asao_FootTarget: vec2d;
+  asao_ModulusOfRunSpeedAtImpactTime: float;
+  asao_CurAim: vec2d;
+  asao_UniformMotionData : uniformMotionData;
+  asao_TimeToRunFromOpeningToImpact: float;
+  asao_RunSpeedFromOpeningToImpact: vec2d;
+  asao_Forehand: bool;
+  asao_researchKind: researchKindHuman
+}
 
 (* Automatic Search Before Opening *)
-type asbo = 
-  { 
-    asbo_TimeToRunBeforeOpening: float;
-    asbo_RunSpeedBeforeOpening: vec2d;
-
-    asbo_BallVelAtImpact:vec3d;
-    asbo_HtOverNet: float;
-    asbo_Impact: vec3d;
-    asbo_FootTarget: vec2d;
-    asbo_ModulusOfRunSpeedAtImpactTime: float;
-    asbo_CurAim: vec2d;
-    asbo_UniformMotionData : uniformMotionData;
-    asbo_TimeToRunFromOpeningToImpact: float;
-    asbo_RunSpeedFromOpeningToImpact: vec2d;
-    asbo_Forehand: bool;
-    asbo_researchKind: researchKindHuman
-  }
+type asbo = { 
+  asbo_TimeToRunBeforeOpening: float;
+  asbo_RunSpeedBeforeOpening: vec2d;
+  asbo_BallVelAtImpact:vec3d;
+  asbo_HtOverNet: float;
+  asbo_Impact: vec3d;
+  asbo_FootTarget: vec2d;
+  asbo_ModulusOfRunSpeedAtImpactTime: float;
+  asbo_CurAim: vec2d;
+  asbo_UniformMotionData : uniformMotionData;
+  asbo_TimeToRunFromOpeningToImpact: float;
+  asbo_RunSpeedFromOpeningToImpact: vec2d;
+  asbo_Forehand: bool;
+  asbo_researchKind: researchKindHuman
+}
 
 (* The states of the player are mostly related to the animations.
-   Some of them are self explanatory, but most aren't, so here it goes:
-   .-ServingBeforeLaunch: The player is serving, but hasn't yet tossed the ball
-   .-ServingAfterLaunchAndBeforePressingButton: The player has tossed the bal, 
-   but hasn't pressed the shoit button yet
-   .-ServingAfterPressingButton: The player is making the moves to hit the ball during the serve
-   .-ServingAfterHittingBall: The player hit the ball and is now finishing the serve motion
-   .-ManualSearch: The player is moving according to the mouse input instructions
-   .-AutoSearchBeforeOpening: The player moves automatically towards the place where he will hit the ball;
-   this happens after the ManualSearch, and during this time the user is now controlling the aim and spin
-   .-AutoSearchAfterOpening: The player executes the shot motion before hitting the ball. After that,
-   it moves to the AutoSearchAfterImpactWaitingForAnimToEnd state
-   .-AutoSearchAfterImpactWaitingForAnimToEnd: The player has hit the ball and is now finishing the shot motion. After that,
-   it moves to the ManualSearch state
-   .-DivingFake
-   .-GettingUpAfterDive
-   .-RealizingWhereTheBallIs: After the opponent hits the ball, the player identifies where it will fall; after that he moves 
-   towards it, thus entering the AutoSearchBeforeOpening state.
+  Some of them are self explanatory, but most aren't, so here it goes:
+  .-ServingBeforeLaunch: The player is serving, but hasn't yet tossed the ball
+  .-ServingAfterLaunchAndBeforePressingButton: The player has tossed the bal, 
+    but hasn't pressed the shoit button yet
+  .-ServingAfterPressingButton: The player is making the moves to hit the ball
+    during the serve
+  .-ServingAfterHittingBall: The player hit the ball and is now finishing the
+    serve motion
+  .-ManualSearch: The player is moving according to the mouse input instructions
+  .-AutoSearchBeforeOpening: The player moves automatically towards the place
+    where he will hit the ball; this happens after the ManualSearch, and during
+    this time the user is now controlling the aim and spin
+  .-AutoSearchAfterOpening: The player executes the shot motion before hitting
+    the ball. It moves to the AutoSearchAfterImpactWaitingForAnimToEnd state next
+  .-AutoSearchAfterImpactWaitingForAnimToEnd: The player has hit the ball and is
+    now finishing the shot motion. After that, it moves to the ManualSearch state
+  .-DivingFake
+  .-GettingUpAfterDive
+  .-RealizingWhereTheBallIs: After the opponent hits the ball, the player
+    identifies where it will fall; after that he moves towards it, thus entering
+    the AutoSearchBeforeOpening state.
 *)
-type humanPlayerState = HPS_ServingBeforeLaunch of bool * vec2d
-                      | HPS_ServingAfterLaunchAndBeforePressingButton
-                        of bool * float * vec2d
-                      | HPS_ServingAfterPressingButton of hpssapb
-                      | HPS_ServingAfterHittingBall of vec2d
-                      | HPS_ManualSearch of hpsms
-                      | HPS_RealizingWhereTheBallIs of uniformMotionData
-                      | HPS_AutoSearchBeforeOpening of asbo
-                      | HPS_AutoSearchAfterOpening of asao
-                      | HPS_AutoSearchAfterImpactWaitingForAnimToEnd of uniformMotionData * bool (*dive *)
-                      | HPS_GettingUpAfterDive of vec2d * float (* timer *) * bool (* too late *)
-                      | HPS_DivingFake of uniformMotionData * reasonForDiveMiss
+type humanPlayerState = 
+  HPS_ServingBeforeLaunch of bool * vec2d
+  | HPS_ServingAfterLaunchAndBeforePressingButton of bool * float * vec2d
+  | HPS_ServingAfterPressingButton of hpssapb
+  | HPS_ServingAfterHittingBall of vec2d
+  | HPS_ManualSearch of hpsms
+  | HPS_RealizingWhereTheBallIs of uniformMotionData
+  | HPS_AutoSearchBeforeOpening of asbo
+  | HPS_AutoSearchAfterOpening of asao
+  | HPS_AutoSearchAfterImpactWaitingForAnimToEnd of uniformMotionData * bool (*dive *)
+  | HPS_GettingUpAfterDive of vec2d * float (* timer *) * bool (* too late *)
+  | HPS_DivingFake of uniformMotionData * reasonForDiveMiss
 
 
-type humanPlayer = { hp_objLeading: obj3d; 
-                     hp_objSlave: obj3d; 
-                     hp_pc: playerCommon;
-
-                     hp_maxParabOpacityGroundShots:float;
-                     hp_maxParabOpacityVolleys:float;
-                     hp_playsInTopmostCourtHalf: bool;
-                     hp_fatigueData : fatigueData;
-                     hp_scoreIndex:int;
-                     hp_state: humanPlayerState;
-                     hp_startHtOverNetForTopSpinGround: float;
-                     hp_startHtOverNetForBackSpinGround: float;
-                     hp_startHtOverNetForVolleys: float      
-                   }
+type humanPlayer = {
+  hp_objLeading: obj3d; 
+  hp_objSlave: obj3d; 
+  hp_pc: playerCommon;
+  hp_maxParabOpacityGroundShots:float;
+  hp_maxParabOpacityVolleys:float;
+  hp_playsInTopmostCourtHalf: bool;
+  hp_fatigueData : fatigueData;
+  hp_scoreIndex:int;
+  hp_state: humanPlayerState;
+  hp_startHtOverNetForTopSpinGround: float;
+  hp_startHtOverNetForBackSpinGround: float;
+  hp_startHtOverNetForVolleys: float      
+ }
 
 let spinOfResearchKind ~r ~p =
   match r with
@@ -463,18 +470,15 @@ let curPosOfHumanPlayer p =
   | HPS_AutoSearchAfterImpactWaitingForAnimToEnd (u, _) ->
     vec2dAdd u.umd_startPos (vec2dMulScalar u.umd_timer  u.umd_startVel)
   | HPS_ManualSearch q-> q.hpsms_pos
-  | HPS_ServingBeforeLaunch (_,pos)  ->
-    pos
-  | HPS_ServingAfterLaunchAndBeforePressingButton (_, _, p) ->
-    p
-  | HPS_ServingAfterPressingButton x ->
-    x.hpssapb_pos
-  | HPS_ServingAfterHittingBall  p ->
-    p
+  | HPS_ServingBeforeLaunch (_,pos)  -> pos
+  | HPS_ServingAfterLaunchAndBeforePressingButton (_, _, p) -> p
+  | HPS_ServingAfterPressingButton x -> x.hpssapb_pos
+  | HPS_ServingAfterHittingBall  p -> p
   | HPS_RealizingWhereTheBallIs  u ->
     vec2dAdd u.umd_startPos (vec2dMulScalar u.umd_timer  u.umd_startVel)
   | HPS_GettingUpAfterDive (pos, _, _) -> pos
-  | HPS_DivingFake (u, _) -> vec2dAdd u.umd_startPos (vec2dMulScalar u.umd_timer  u.umd_startVel)
+  | HPS_DivingFake (u, _) -> 
+    vec2dAdd u.umd_startPos (vec2dMulScalar u.umd_timer  u.umd_startVel)
 
 type player = HP of humanPlayer | CP of computerPlayer
 

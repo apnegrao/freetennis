@@ -7,7 +7,7 @@ let g = -. 980.0 (* points towards the ground * TODO: This needs a better name*)
    places. If you choose to customize them, use absolute paths without
    the trailing slash. *)
 let gfxDir = "graphics" (* where the pngs and subdirs are located. 
-                           			   example of customization: /usr/share/freetennis/gfx *)
+                          example of customization: /usr/share/freetennis/gfx *)
 
 (* ----- TODO: I think many of these should be in the AnimationModule ------*)
 
@@ -15,6 +15,9 @@ let gfxDir = "graphics" (* where the pngs and subdirs are located.
 module StringMap = Map.Make (String)
 
 (** ----- Animation Data ----- **)
+(* FIXME: Take a look at why these data types are used in Objects3d.ml. Maybe
+we should merge this file with the AnimationModule.ml.  Also, the functions in
+Objects3D.mjl that use these data types should not need to be using them. *)
 type animFrame = { 
   animFrameDuration:float (*seconds *);
   animFrameTexture: string; animFrameHotSpot:vec2d;
@@ -41,10 +44,10 @@ type animation = ServiceAnimation of serviceAnim
 type animState = Animated of float | NotAnimated | PausedDuringService
 
 (** ----- Court Data ----- **)
-let tol = 5.0 (* cm of tolerance due to the fact that the ball is not a point object, so when it bounces outside it can touch the line *)
+let tol = 5.0 (* cm of tolerance due to the fact that the ball is not a 
+point object, so when it bounces outside it can touch the line *)
 
 let netHtCenter = 91.4
-
 let netHtBorder = 107.0
 
 (* Court width*)
@@ -68,9 +71,7 @@ let rightBound = -. leftBound
 let lowerBound = -. upperBound
 
 let distanceFromPolesToExternalBorder = 91.4
-
 let leftPoleX = -. courtWt2  -. distanceFromPolesToExternalBorder
-
 let rightPoleX = courtWt2  +. distanceFromPolesToExternalBorder
 
 let netHtAtX x = 
@@ -81,8 +82,10 @@ let netHtAtX x =
   else
     0.0
 
+(* FIXME: This should be called 'surface'... *)
 type material = Cement | Grass | Clay
 
+(*... and this should be called 'surfaceData' *)
 type surface = {
   s_material:material;
   s_spinAttenuationFactor:float;
@@ -168,8 +171,7 @@ let rec accumulate ~list ~f ~state =
   match list with
     [] -> state
   | h::t -> 
-    let state' = f h state 
-    in
+    let state' = f h state in
     accumulate ~list:t ~f:f ~state:state'
 
 let rec allPairs x y = 
@@ -178,7 +180,6 @@ let rec allPairs x y =
   | x1::xt -> 
     let x1y = List.map (fun k -> (x1, k)) y in
     List.append x1y (allPairs xt y)
-
 
 
 let exists l p =
