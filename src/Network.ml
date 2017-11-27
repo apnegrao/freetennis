@@ -2,6 +2,10 @@ open Unix
 
 exception CouldNotConnectToServer
 
+(* TODO: This type used in a lot of files, but other than that, this file only
+declares a type and a function. Maybe move the type to SharedData.ml and the
+function back to freetennis.ml. But before doing that see if we can refactor the
+code so that most things involving server data are moved here *)
 type serverData = 
     Server of (Unix.file_descr * Unix.file_descr) * in_channel * out_channel
     | Client of Unix.file_descr * in_channel * out_channel

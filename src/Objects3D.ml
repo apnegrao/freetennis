@@ -135,15 +135,13 @@ let renderObj3d ~o ~handleOfTexture ~pos ~flipX ~color=
 let create3dObj ~dirs ~initialAnim =
   let aMap =
     let animations =
-      let animOfDir  (d, impactFrame, times, (scalex, scaley))  =
+      let animOfDir (d, impactFrame, times, (scalex, scaley)) =
         print_endline ("Creating animation: " ^ d);
         let arr =
           let filesWithIndices =
             let files =
-              let notCVS x =
-                0 != (compare x "CVS")
-              in
-              List.sort compare (List.filter notCVS (Array.to_list (Sys.readdir d)))
+              let notCVS x = 0 != (compare x "CVS") in
+              List.sort compare(List.filter notCVS (Array.to_list (Sys.readdir d)))
             in
             if  List.length files != Array.length times then
               (print_endline (d);
@@ -175,17 +173,18 @@ let create3dObj ~dirs ~initialAnim =
                       assert(nChannels = 4 || nChannels = 3);
                       let offs =
                         let pitch = GdkPixbuf.get_rowstride s in
-                        y * pitch + x * nChannels in
+                        y * pitch + x * nChannels
+                      in
                       if nChannels = 3 then
-                        (Gpointer.get_byte pixels ~pos:offs,
-                         Gpointer.get_byte pixels ~pos:(offs + 1),
-                         Gpointer.get_byte pixels ~pos:(offs + 2),
-                         255 )
+                        ( Gpointer.get_byte pixels ~pos:offs,
+                          Gpointer.get_byte pixels ~pos:(offs + 1),
+                          Gpointer.get_byte pixels ~pos:(offs + 2),
+                          255 )
                       else
-                        (Gpointer.get_byte pixels ~pos:offs,
-                         Gpointer.get_byte pixels ~pos:(offs + 1),
-                         Gpointer.get_byte pixels ~pos:(offs + 2),
-                         Gpointer.get_byte pixels ~pos:(offs + 3) )
+                        ( Gpointer.get_byte pixels ~pos:offs,
+                          Gpointer.get_byte pixels ~pos:(offs + 1),
+                          Gpointer.get_byte pixels ~pos:(offs + 2),
+                          Gpointer.get_byte pixels ~pos:(offs + 3) )
                     in
                     getpixel x y s
                   in
@@ -201,7 +200,7 @@ let create3dObj ~dirs ~initialAnim =
                                       ((float_of_int y)*. scaley)
               | (x,y)::_ ->
                 ( print_endline ("More than one hotspot found in file " ^ 
-                                 f ^ ". Picking first");
+                                 f ^ ". Picking first.");
                   printList hotspots (fun (x, y) ->  "(" ^ string_of_int x ^ 
                                       "," ^ string_of_int y ^ ")");
                   vec2dCreate (scalex *. (float_of_int x))
@@ -216,8 +215,9 @@ let create3dObj ~dirs ~initialAnim =
                 try
                   findTheHotSpot s
                 with HotSpotNotFound ->
-                  vec2dCreate ((float_of_int(GdkPixbuf.get_width s)) *. scalex /. 2.0)
-                              (float_of_int (GdkPixbuf.get_height s) *. scaley)
+                  vec2dCreate
+                    ((float_of_int(GdkPixbuf.get_width s)) *. scalex /. 2.0)
+                    (float_of_int (GdkPixbuf.get_height s) *. scaley)
               )
             }
           in

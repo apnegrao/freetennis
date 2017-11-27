@@ -173,6 +173,7 @@ let rec manageAllPendingSdlEvents ~vd ~windowHt ~windowWt=
         {vd with vd_mustQuit = true}
       | Sdlevent.KEYDOWN k ->
         let vd' = 
+          (* TODO: Can this if-elseif chain be replaced with 'match with' ? *)
           if k.keysym = Sdlkey.KEY_MINUS then
             {vd with vd_slowMotionFactor = vd.vd_slowMotionFactor -. 0.1}
           else if k.keysym = Sdlkey.KEY_0 then

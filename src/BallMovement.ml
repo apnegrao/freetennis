@@ -135,7 +135,6 @@ let buildTrajFromTwoPointsAndHeight ~impact ~htOverNet ~spin ~bounceDesired  ~ta
       let spinY = spin in
       let spinX = -. spin *. sin beta in
       let spinZ =  spin *. cos beta in
-
       assert ( spinZ *. spinY >= 0.0);
       (* it can be 0 if the ball is flat! e.g. volee *)
       (* spiegazione del precedente assert: sto facendo i calcoli ipotizzando di
@@ -265,8 +264,10 @@ let whenWillTheBallArriveAtZ  ~z ~s ~surf =
   match may with
   | None -> None (* @@ happened on very short dropshot *)
   | Some iata ->
-      (* FIXME: Changed the previous code to get rid of a warning, but using
-        asserts is not safe... *)
+      (*if iata.iata_t < 0.0 then
+		      ( assert(false);
+          None)
+      else* XXX: Old code *)
       assert(iata.iata_t >= 0.0);
       let tArrive = iata.iata_t in
       let ballHtAtTArrive = i.y3 +. startVel.y3 *. tArrive +. 0.5 *.
@@ -375,10 +376,7 @@ let updateBall ~b ~dt ~score ~surf ~sounds ~nextServiceIsFirst ~opt
   | BS_Still _ -> score, b, nextServiceIsFirst, players
   | BS_Moving m ->
     let newTimer = dt +. m.bsm_curTimer in
-    let b = 
-      let newm = { m with bsm_curTimer = newTimer} in
-      {b with b_state = BS_Moving newm}
-    in
+    let b = {b with b_state = BS_Moving {m with bsm_curTimer = newTimer}} in
     let incScore p s  = 
       assert (p = 0 || p = 1);
       let opponent x = 1-x in

@@ -17,7 +17,7 @@ module StringMap = Map.Make (String)
 (** ----- Animation Data ----- **)
 (* FIXME: Take a look at why these data types are used in Objects3d.ml. Maybe
 we should merge this file with the AnimationModule.ml.  Also, the functions in
-Objects3D.mjl that use these data types should not need to be using them. *)
+Objects3D.ml that use these data types should not need to be using them. *)
 type animFrame = { 
   animFrameDuration:float (*seconds *);
   animFrameTexture: string; animFrameHotSpot:vec2d;

@@ -21,18 +21,14 @@ let whoServes s =
     let isEven n = n mod 2 = 0 in
     if isEven sum_q_mo then firstToServe else 1 - firstToServe
   | NoTieBreak q ->
-    (* @@ sbagliato, funziona solo per
-       		 il primo set. In realta' devo
-       		 contare tutti i game di tutti i
-       		 set. *)
-    if ((q.games.(0) +  q.games.(1)) mod 2 ) = 0 then
+    (* @@ sbagliato, funziona solo per il primo set. In realta' devo contare
+          tutti i game di tutti i set. *)
+    if ((q.games.(0) + q.games.(1)) mod 2 ) = 0 then
       firstToServe 
     else
       1 - firstToServe
 
-(*
-  Renders the court: surface, lines and net.
-*)
+(* Renders the court: surface, lines and net. *)
 let renderCourt ~surfaceType ~surfaceFileName ~handleOfTexture =
   let surface =
     let xrepeat, yrepeat =  
@@ -187,11 +183,10 @@ let renderCourt ~surfaceType ~surfaceFileName ~handleOfTexture =
   GlDraw.ends ();
   )
 
-(* As the name indicates, this functions prints 2d elements such as the score and 
-other strings shown in various parts of the game ('Pause', 'Fault', etc...), as
-well as the energy bar of the player *)
-(* FIXME: Take a good look at all these parameters to see what makes 
-   sense here... *)
+(* As the name indicates, this functions prints text elements such as the
+score and  other strings shown in various parts of the game ('Pause', 'Fault', 
+etc...), as well as the energy bar of the player *)
+(* FIXME: Take a look at all these parameters to see what makes sense here *)
 let renderText ~players ~ball ~serverData ~showRemotePause 
     ~showLocalPause ~windowHt ~windowWt ~handleOfTexture ~score =
   let plBelow =
@@ -202,7 +197,7 @@ let renderText ~players ~ball ~serverData ~showRemotePause
   and h = 25.0 *. factor
   and d2 = (22.0 *. 22.0 /. 26.0) *. factor
   and h2 = 22.0 *. factor in
-  (** Render score *)
+  (* Render score *)
   let renderNumber n destx desty =
     GlDraw.color ~alpha:1.0 (1.0 , 1.0, 1.0);
     let t = 
@@ -222,7 +217,7 @@ let renderText ~players ~ball ~serverData ~showRemotePause
     Gl.enable `texture_2d;
     GlDraw.begins `triangle_fan;
 
-    let verts =
+    let verts = 
       [  (0.0 ,  0.0, 0.0 , 0.0);
          (d,  0.0, 1.0, 0.0);
          (d, h, 1.0, 1.0);
@@ -239,10 +234,9 @@ let renderText ~players ~ball ~serverData ~showRemotePause
       if n = ' ' then
         ()
       else
-        (
-          GlDraw.color ~alpha:1.0 (1.0 , 1.0, 1.0);
-          let t = 
-            gfxDir ^ "/n" ^ String.make 1 n ^ ".png" in
+        ( GlDraw.color ~alpha:1.0 (1.0 , 1.0, 1.0);
+          let t =  gfxDir ^ "/n" ^ String.make 1 n ^ ".png" in
+          (* FIXME: this function one is repeated from above *)
           let te = 
             try
               (StringMap.find t handleOfTexture)
@@ -275,9 +269,8 @@ let renderText ~players ~ball ~serverData ~showRemotePause
 
   GlMat.mode `projection;
   GlMat.load_identity ();
-  GlMat.ortho ~x:(0.0, float_of_int windowWt)
-    ~y:(float_of_int windowHt, 0.0) 
-    ~z:(-. 1.0, 0.0) ;
+  GlMat.ortho ~x:(0.0, float_of_int windowWt) ~y:(float_of_int windowHt, 0.0) 
+      ~z:(-. 1.0, 0.0) ;
   GlMat.mode `modelview;
   GlMat.load_identity ();
   Gl.disable `depth_test;
@@ -309,15 +302,15 @@ let renderText ~players ~ball ~serverData ~showRemotePause
   match score.sc_state with
   | TieBreak points -> 
   ( let w = whoServes score in
-    let tieStr =  string_of_int points.(w) ^ " " ^ string_of_int points.(1-w) in
-    let destX =  float_of_int windowWt -. d2 *. float_of_int (String.length tieStr) in
+    let tieStr = string_of_int points.(w) ^ " " ^ string_of_int points.(1-w) in
+    let destX = float_of_int windowWt -. d2 *. float_of_int (String.length tieStr) in
     renderString09 tieStr destX 0.0 ;
     renderString09 "6 6" 0.0 0.0
   );
   | NoTieBreak n ->
   ( let w = whoServes score in
-    renderNumber n.points.(w)     (float_of_int windowWt -. d *. 2.4)     0.0;
-    renderNumber n.points.(1-w)   (float_of_int windowWt -. d *. 1.0)     0.0;
+    renderNumber n.points.(w)  (float_of_int windowWt -. d *. 2.4)     0.0;
+    renderNumber n.points.(1-w) (float_of_int windowWt -. d *. 1.0)     0.0;
     let scoreStr = 
        (string_of_int (n.games.(0)) ^ " " ^ string_of_int (n.games.(1)))
     in
@@ -354,10 +347,8 @@ let renderText ~players ~ball ~serverData ~showRemotePause
     renderTexture offsx offsy  (offsx +. wtScaled)  (offsy +. htScaled)
       (StringMap.find ( gfxDir ^ imagePath) handleOfTexture)
   in
-  if showLocalPause then
-    renderPause ~wtPixmap:196.0 ~imagePath:"/paused.png"
-  else
-    ();
+  if showLocalPause then renderPause ~wtPixmap:196.0 ~imagePath:"/paused.png"
+  else ();
   if showRemotePause then
     renderPause ~wtPixmap:408.0 ~imagePath:"/paused-remote.png"
   else
@@ -391,8 +382,8 @@ let renderText ~players ~ball ~serverData ~showRemotePause
         let wh3 = float_of_int windowHt /. 3.0 in
         let maxRectHt = wh3 *. 0.8 in
         let m = maxRectHt /. maxSprintCm in
-        let rectHt = maxRectHt -. m *. ( maxSprintCm -.
-              h.hp_fatigueData.fatigueAvailableSprintDistance) 
+        let rectHt = maxRectHt -. m *. ( maxSprintCm 
+            -. h.hp_fatigueData.fatigueAvailableSprintDistance) 
         and rectWt = max 1.0 (4.0 *. float_of_int windowWt /. 1000.0) in
         renderTexture (float_of_int windowWt -. rectWt  ) (wh3 -. rectHt )
           (float_of_int windowWt ) wh3
@@ -412,7 +403,6 @@ let renderText ~players ~ball ~serverData ~showRemotePause
 (** Renders 3d stuff, I guess**)
 let render ~players ~ball ~aidebug ~serverData ~camData 
     ~handleOfTexture ~realisticParabolaOpacity () =
-  (* FIXME: This function is duplicated in render2dStuff *)
   let plBelow =
     if playsInTopmostCourtHalf players.(0) then players.(1) else players.(0) in
   let plAbove =
@@ -426,10 +416,12 @@ let render ~players ~ball ~aidebug ~serverData ~camData
       | None ->
         let t = bsm.bsm_trajectory in
         let bounceT = bsm.bsm_whenWillItBounce in
-        let bounceX = t.impact.x3 +. t.startVel.x3 *. bounceT -. 0.5 *.
-                      t.spin.x3 *. bounceT *. bounceT in
-        let bounceZ = t.impact.z3 +. t.startVel.z3 *. bounceT -. 0.5 *.
-                      t.spin.z3 *. bounceT *. bounceT in
+        let bounceX = t.impact.x3 +. t.startVel.x3 *. bounceT -. 0.5 
+                      *. t.spin.x3 *. bounceT *. bounceT
+        in
+        let bounceZ = t.impact.z3 +. t.startVel.z3 *. bounceT -. 0.5 
+                      *. t.spin.z3 *. bounceT *. bounceT
+        in
         renderPolygon ball.b_redCrossPolygon 
                       (Some (vec3dCreate bounceX 1.0 bounceZ))
       | _ -> ()
@@ -438,16 +430,16 @@ let render ~players ~ball ~aidebug ~serverData ~camData
   let p = curBallPos ball in
   renderPolygon ball.b_shadowPolygon (Some (vec3dCreate p.x3 1.0 p.z3 ));
   if aidebug then
-    ( match players.(1) with
-      | CP c ->
-        (match c.cp_state with
-         | CPS_GetBackToCenterDuringGame (_, targetPos, optPos) ->
-           (renderPolygon ball.b_shadowPolygon
+  ( match players.(1) with
+    | CP c ->
+      ( match c.cp_state with
+        | CPS_GetBackToCenterDuringGame (_, targetPos, optPos) ->
+          ( renderPolygon ball.b_shadowPolygon
               (Some (vec3dCreate targetPos.x2 0.5 targetPos.z2));
             renderPolygon ball.b_shadowPolygon
               (Some (vec3dCreate optPos.x2 0.5 optPos.z2)))
-         | _ -> ())
-      | HP _ -> ())
+        | _ -> ())
+    | HP _ -> ())
   else
     ();
 
@@ -595,79 +587,80 @@ let render ~players ~ball ~aidebug ~serverData ~camData
                 (t.impact.x3 +. t.startVel.x3 *. ti  -. 0.5 *. ti2 *. t.spin.x3)
                 (t.impact.y3 +. t.startVel.y3 *. ti  +. 0.5 *. ti2 *.
                   (-. t.spin.y3 -. abs_float g))
-                (t.impact.z3 +. t.startVel.z3 *. ti  -. 0.5 *. ti2 *. t.spin.z3) in
+                (t.impact.z3 +. t.startVel.z3 *. ti  -. 0.5 *. ti2 *. t.spin.z3)
+            in
             let v = vertOfTime startT in
             if v.z3 *. t.impact.z3 < 0.0 then []
             else v::(vertsBeforeNet (startT +. 0.01)) (count -1)
         in
-        List.iter (fun v -> GlDraw.vertex3 (v.x3, v.y3, v.z3)) (vertsBeforeNet 0.0 200);
+        List.iter (
+          fun v -> GlDraw.vertex3 (v.x3, v.y3, v.z3)) (vertsBeforeNet 0.0 200);
         GlDraw.ends ();
         (* draw the second part of the parabola, up to the bounce point *)
         let maybeHit = whenWillTheTrajectoryHitTheNet t in
         let maybeIat = whenWillTheTrajArriveAtZ ~z:0.0 ~t in
-          (match maybeIat with
+        ( match maybeIat with
           | None -> assert false
           | Some iat ->
-            (match maybeHit with
-            | Some _ -> ()
-            | None ->
-              if iat.iata_t < 0.0 then
-                assert (false)
-              else
-                (assert(iat.iata_t > 0.0);
-                 GlDraw.begins `line_strip;
-                 GlDraw.color ~alpha:(opacity) (1.0, 1.0, 0.0);
-                 let rec vertsBeforeBounce startT  count =
-                   if count = 0 then
-                     ( print_endline "Failed printing second part of parabola.
-                        Skipping."; [])
-                   else
-                     let vertOfTime ti =
-                       let ti2 = ti *. ti in
-                       vec3dCreate 
-                        (t.impact.x3 +. t.startVel.x3 *. ti  -. 0.5 *. ti2 *.
-                          t.spin.x3)
-                        (t.impact.y3 +. t.startVel.y3 *. ti  +. 0.5 *. ti2 *.
-                          (-. t.spin.y3 -. abs_float g))
-                        (t.impact.z3 +. t.startVel.z3 *. ti  -. 0.5 *. ti2 *.
-                          t.spin.z3)
+            ( match maybeHit with
+              | Some _ -> ()
+              | None ->
+                ( assert(iat.iata_t >= 0.0);
+                  GlDraw.begins `line_strip;
+                  GlDraw.color ~alpha:(opacity) (1.0, 1.0, 0.0);
+                  let rec vertsBeforeBounce startT  count =
+                    if count = 0 then
+                      ( print_endline "Failed printing second part of parabola.
+                       Skipping."; [])
+                    else
+                      let vertOfTime ti =
+                        let ti2 = ti *. ti in
+                        vec3dCreate 
+                         (t.impact.x3 +. t.startVel.x3 *. ti  -. 0.5 *. ti2 *.
+                           t.spin.x3)
+                         (t.impact.y3 +. t.startVel.y3 *. ti  +. 0.5 *. ti2 *.
+                           (-. t.spin.y3 -. abs_float g))
+                         (t.impact.z3 +. t.startVel.z3 *. ti  -. 0.5 *. ti2 *.
+                           t.spin.z3)
                       in
-                     let v = vertOfTime startT in
-                     if v.y3 <= 0.0 then []
-                     else v::(vertsBeforeBounce (startT +. 0.01)) (count -1 )
-                 in
-                 List.iter (fun v -> GlDraw.vertex3 (v.x3, v.y3, v.z3))
-                  (vertsBeforeBounce iat.iata_t 500);
-                 GlDraw.ends ()));
+                      let v = vertOfTime startT in
+                      if v.y3 <= 0.0 then []
+                      else v::(vertsBeforeBounce (startT +. 0.01)) (count -1 )
+                  in
+                  List.iter (fun v -> GlDraw.vertex3 (v.x3, v.y3, v.z3))
+                    (vertsBeforeBounce iat.iata_t 500);
+                  GlDraw.ends ()
+                )
+            );
             (* draw the bold point over the net *)
             let xn = t.impact.x3 +. t.startVel.x3 *. iat.iata_t -. 0.5 *.
               iat.iata_t *. iat.iata_t *. t.spin.x3
-          in
-          let yn = t.impact.y3 +. t.startVel.y3 *. iat.iata_t +. 0.5 *.
-            iat.iata_t *. iat.iata_t *. (-. t.spin.y3 -. abs_float g)
-          in
-          (match maybeHit with
-          | None ->
-            begin
-              Gl.disable `depth_test;
-              GlDraw.color ~alpha:opacity (1.0, 1.0, 0.0);
-              GlDraw.point_size 3.5 ;
-              GlDraw.begins `points;
-              GlDraw.vertex3 ( xn, yn, 0.0 ) ;
-              GlDraw.ends ();
-              Gl.enable `depth_test
-            end
-          | Some _ -> ()
-          );
-          (* draw the vertical line over the net *)
-          (match maybeHit with
-          | None -> GlDraw.color ~alpha:(opacity *. 0.2) (1.0, 1.0, 1.0)
-          | Some _ -> GlDraw.color ~alpha:(opacity *. 0.4) (1.0, 0.9, 0.2)
-          );
-          GlDraw.begins `line_strip;
-          GlDraw.vertex3 ( xn, yn, 0.0 ) ;
-          GlDraw.vertex3 ( xn, 0.0, 0.0 ) ;
-          GlDraw.ends ();
+            in
+            let yn = t.impact.y3 +. t.startVel.y3 *. iat.iata_t +. 0.5 *.
+              iat.iata_t *. iat.iata_t *. (-. t.spin.y3 -. abs_float g)
+            in
+            ( match maybeHit with
+              | None ->
+                begin
+                  Gl.disable `depth_test;
+                  GlDraw.color ~alpha:opacity (1.0, 1.0, 0.0);
+                  GlDraw.point_size 3.5 ;
+                  GlDraw.begins `points;
+                  GlDraw.vertex3 ( xn, yn, 0.0 ) ;
+                  GlDraw.ends ();
+                  Gl.enable `depth_test
+                end
+              | Some _ -> ()
+            );
+            (* draw the vertical line over the net *)
+            ( match maybeHit with
+              | None -> GlDraw.color ~alpha:(opacity *. 0.2) (1.0, 1.0, 1.0)
+              | Some _ -> GlDraw.color ~alpha:(opacity *. 0.4) (1.0, 0.9, 0.2)
+            );
+            GlDraw.begins `line_strip;
+            GlDraw.vertex3 ( xn, yn, 0.0 ) ;
+            GlDraw.vertex3 ( xn, 0.0, 0.0 ) ;
+            GlDraw.ends ();
         );
         (* draw the bold point on the bounce point *)
         match maybeHit with
@@ -734,10 +727,8 @@ let render ~players ~ball ~aidebug ~serverData ~camData
         begin
           match traj with
           | Some tr ->
-            if hp.hp_playsInTopmostCourtHalf then
-              assert(tr.impact.z3 < 0.0)
-            else
-              assert(tr.impact.z3 > 0.0);
+            if hp.hp_playsInTopmostCourtHalf then assert(tr.impact.z3 < 0.0)
+            else assert(tr.impact.z3 > 0.0);
             let volley = 
               match h.asao_researchKind with
               | RKH_Normal vt ->
@@ -826,7 +817,8 @@ let loadTextureFromExistingGdkPixBuf ~name  ~pixbuf ~colorKey
       end
     else
       let handleOfTexture' = StringMap.add name 
-          textureHandles.(nextFreeTextureIndex) handleOfTexture in
+          textureHandles.(nextFreeTextureIndex) handleOfTexture
+      in
       GlTex.bind_texture ~target:`texture_2d textureHandles.(nextFreeTextureIndex);
       GlTex.parameter ~target:`texture_2d (`mag_filter `linear);
       GlTex.parameter ~target:`texture_2d (`min_filter `linear);
@@ -864,7 +856,6 @@ let loadTextureFromExistingGdkPixBuf ~name  ~pixbuf ~colorKey
     ~glpix:(glPixOfPixBuf ~pixbuf ~makeSquare64x64:make64x64)
     ~colorKey ~handleOfTexture ~nextFreeTextureIndex ~textureHandles
 
-
 let loadTextureFromFile ~fileName ~colorKey ~handleOfTexture ~make64x64
     ~nextFreeTextureIndex ~textureHandles =
   let pixbuf = GdkPixbuf.from_file fileName in
@@ -875,7 +866,6 @@ let loadTextures surface =
   let maxNumTextures = 1500 in
   let textureHandles = GlTex.gen_textures maxNumTextures in
   assert ( Array.length textureHandles = maxNumTextures);
-
   let handleOfTexture = StringMap.empty in
   let nextFreeTextureIndex = 0 in
   let surfaceFileName =
@@ -926,111 +916,21 @@ let loadTextures surface =
   in
   (* FIXME: Check if/how this can be done with accumulate. *)
   let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Aattesa")
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Asaltello") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Adestra") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Asinistra") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Agiu") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Asu") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Adritto") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Arovescio") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Arovescioback") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Adrittoback") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Adrittov") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Adrittoallungov") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Arovesciov") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Arovescioallungov") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Arovescioforwardstretch") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Brovescioforwardstretch") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Adrittoforwardstretch") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bdrittoforwardstretch") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Aservizio") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Asmash") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Battesa") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bsaltello") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bdestra") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bsinistra") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bgiu") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bsu") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bdritto") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Brovescio") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Brovescioback") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bdrittoback") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bdrittov") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bdrittoallungov") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Brovesciov") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Brovescioallungov") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bservizio") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
-  let (handleOfTexture, nextFreeTextureIndex) =
-    loadAllFilesInDirAsTextures ~dir: (gfxDir ^ "/Bsmash") 
-      ~handleOfTexture ~nextFreeTextureIndex ~textureHandles in
+    let list = 
+      ["/Aattesa";"/Asaltello";"/Adestra";"/Asinistra";"/Agiu";"/Asu";"/Adritto";
+       "/Arovescio";"/Arovescioback";"/Adrittoback";"/Adrittov";
+       "/Adrittoallungov";"/Arovesciov"; "/Arovescioallungov";
+       "/Arovescioforwardstretch";"/Brovescioforwardstretch";
+       "/Adrittoforwardstretch";"/Bdrittoforwardstretch";"/Aservizio";"/Asmash";
+       "/Battesa";"/Bsaltello";"/Bdestra";"/Bsinistra";"/Bgiu";"/Bsu";"/Bdritto";
+       "/Brovescio";"/Brovescioback";"/Bdrittoback";"/Bdrittov";
+       "/Bdrittoallungov";"/Brovesciov";"/Brovescioallungov";
+       "/Bservizio";"/Bsmash"
+      ]
+    in
+    accumulate ~f:(fun str (h, n) -> loadAllFilesInDirAsTextures
+              ~dir:(gfxDir ^ str) ~handleOfTexture:h ~nextFreeTextureIndex:n
+              ~textureHandles)
+      ~state:(handleOfTexture, nextFreeTextureIndex) ~list
+  in
   surfaceFileName, handleOfTexture

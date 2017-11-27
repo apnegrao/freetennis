@@ -447,419 +447,361 @@ let _ =
         | Server (_, inc, _) -> ( Marshal.from_channel inc : bool)
       in
 
-      (* TODO: Can this be done without the else? Something like:
-      if not mustQuit then ()
-      Then the rest of the function would be outside the if-else, saving a lot
-      of space (well, at least saving a tab...), perhaps making it clear. *)
+      (* TODO: Try moving the else part to a new function ('processGameFrame').
+        But first, check if it is possible to refactor the code *)
       if mustQuit then
         ()
       else
-        ( GlClear.clear [`color; `depth];
-          let camData =
-            let fovx = fovY *. (float_of_int windowWt) /.(float_of_int windowHt) in
-            let whoPlaysBelow =
-              if playsInTopmostCourtHalf players.(0) then
-                ( assert( not ( playsInTopmostCourtHalf players.(1)));
-                  1 )
-              else 0 in
-            let ballP =
-              match ball.b_state with
-              | BS_Still _ -> vec2dCreate 0.0 0.0
-              | BS_Moving _ -> (projection2d (curBallPos ball)) in
-            match serverData with
-            | Server _  | NeitherServerNorClient -> 
-              let thePlayerAboveIsHuman =
-                match players.(1- whoPlaysBelow) with
-                | HP _ -> true | CP _ -> false
-              in
-              calculateCamera ~fovy:(degToRad fovY) ~fovx:(degToRad fovx) 
-                ~znear:zNear
-                ~posBottomPlayer:(curPosOfPlayer players.(whoPlaysBelow))
-                ~posTopmostPlayer:(curPosOfPlayer players.( 1- whoPlaysBelow))
-                ~posBall:ballP ~xCamBehav:PushScroll
+      ( GlClear.clear [`color; `depth];
+        let camData =
+          let fovx = fovY *. (float_of_int windowWt) /.(float_of_int windowHt) in
+          let whoPlaysBelow =
+            if playsInTopmostCourtHalf players.(0) then
+              ( assert( not ( playsInTopmostCourtHalf players.(1)));
+                1 )
+            else
+              0
+          in
+          let ballP =
+            match ball.b_state with
+            | BS_Still _ -> vec2dCreate 0.0 0.0
+            | BS_Moving _ -> (projection2d (curBallPos ball))
+          in
+          let topPlayerPos = curPosOfPlayer players.( 1- whoPlaysBelow) in
+          let bottomPlayerPos = curPosOfPlayer players.(whoPlaysBelow) in
+          match serverData with
+          | Server _  | NeitherServerNorClient -> 
+            let thePlayerAboveIsHuman =
+              match players.(1- whoPlaysBelow) with
+              | HP _ -> true | CP _ -> false
+            in
+            calculateCamera ~fovy:(degToRad fovY) ~fovx:(degToRad fovx) 
+              ~znear:zNear ~posBottomPlayer:bottomPlayerPos
+              ~posTopmostPlayer:topPlayerPos ~posBall:ballP
+              ~xCamBehav:PushScroll ~deltaCameraBackwards:vd.vd_deltaCamera
+              ~mustShowBottomCourtLine:thePlayerAboveIsHuman  
+          | Client _ ->
+            let flippedCam = 
+              calculateCamera ~fovy:(degToRad fovY) ~fovx:(degToRad fovx)
+                ~znear:zNear ~posBottomPlayer:(flipxz2 (topPlayerPos))
+                ~posTopmostPlayer:(flipxz2 (bottomPlayerPos))
+                ~posBall:(flipxz2 ballP) ~xCamBehav:PushScroll 
                 ~deltaCameraBackwards:vd.vd_deltaCamera
-                ~mustShowBottomCourtLine:thePlayerAboveIsHuman  
-            | Client _ ->
-              let flippedCam = 
-                calculateCamera ~fovy:(degToRad fovY) ~fovx:(degToRad fovx)
-                  ~znear:zNear
-                  ~posBottomPlayer:(
-                      flipxz2 (curPosOfPlayer players.(1 - whoPlaysBelow)))
-                  ~posTopmostPlayer:(
-                      flipxz2 (curPosOfPlayer players.(  whoPlaysBelow)))
-                  ~posBall:(flipxz2 ballP) ~xCamBehav:PushScroll 
-                  ~deltaCameraBackwards:vd.vd_deltaCamera
-                  ~mustShowBottomCourtLine:false
+                ~mustShowBottomCourtLine:false
+            in
+            let flipCamData d = 
+            { d with
+                eyeX = -. d.eyeX;
+                eyeZ = -. d.eyeZ;
+                lookatX = -. d.lookatX;
+                lookatZ = -. d.lookatZ
+            }
+            in
+            flipCamData flippedCam
+        in
+        GlMat.load_identity ();
+        GluMat.look_at ~eye:(camData.eyeX, camData.eyeY, camData.eyeZ)
+          ~center:(camData.lookatX, camData.lookatY, camData.lookatZ)
+          ~up:(0.0, 1.0, 0.0) ;
+        let timer =
+          match serverData with
+          | Server _ | NeitherServerNorClient ->
+            updateTimer ~tim:timer ~slowMotionFactor:vd.vd_slowMotionFactor
+          | Client (_,  inc, _) -> ((Marshal.from_channel inc : timerData))
+        in
+        ( match serverData with
+          | Server (_, _, outc) ->
+            ( Marshal.to_channel outc timer [];
+              flush outc
+            )
+          | Client _ | NeitherServerNorClient  -> () );
+        let dt = calcDt ~timer ~slowMotionFactor:vd.vd_slowMotionFactor in
+        let isNotServing p =
+          match p with
+          | HP h ->
+            ( match h.hp_state with
+              | HPS_ServingBeforeLaunch _ -> false
+              | HPS_ServingAfterLaunchAndBeforePressingButton _ -> false
+              | HPS_ServingAfterPressingButton _ -> false
+              | HPS_ServingAfterHittingBall _ -> false
+              | _ -> true)
+          | CP c ->
+            ( match c.cp_state with
+              | CPS_ServingBeforeLaunch _ -> false
+              | CPS_ServingAfterLaunchAndBeforeStartingGesture _ -> false
+              | CPS_ServingAfterHittingBall -> false
+              | CPS_ServingAfterStartingGesture _ -> false
+              | _ -> true)
+        in
+        let players =
+          match ball.b_state with
+          | BS_Moving _ -> players
+          | BS_Still _ ->
+            if isNotServing players.(0) && isNotServing players.(1) then
+              let transf p =
+                let p = resetFatigue p in
+                let scoreIsEven = serviceIsToTheRight score in
+                if (scoreIndex p) = whoServes score then  
+                  match p with
+                  | HP  h ->
+                    let st, ooLe, ooSl = 
+                        startServiceHuman ~h ~scoreIsEven ~serverData
+                    in
+                    HP { h with hp_state = st; 
+                                hp_objLeading = ooLe; 
+                                hp_objSlave = ooSl}
+                  | CP c ->
+                    let attackPref = intentionsDebug c in
+                    print_endline ("attackPref  " ^ string_of_int attackPref);
+                    let st, oo, umd = startServiceComputer ~h:c ~scoreIsEven in
+                    CP { c with cp_state = st; cp_obj = oo; cp_umd = umd}
+                else
+                  let preparePlayerForReceiving ~p ~scoreIsEven =
+                    let playsInTopHalf =
+                      match p with
+                      (* FIXME: Why is there a different playsInTop... var for
+                         the human and the computer? *)
+                      | HP h -> h.hp_playsInTopmostCourtHalf
+                      | CP c -> c.cp_playsInTopmostCourtHalf
+                    in
+                    let dirsign = if playsInTopHalf then -. 1.0 else 1.0 in
+                    let x, z =
+                      if scoreIsEven then
+                        (dirsign *. (courtWt2 -. 50.0),
+                         dirsign *. (courtHt2 +. 190.0))
+                      else
+                        ( dirsign *. (-. courtWt2 +. 50.0)  ,
+                          dirsign *. (courtHt2 +. 190.0 ))
+                    in
+                    match p with
+                    | HP  h ->
+                      let prepareHumanPlayerForReceiving ~h ~scoreIsEven =
+                        let newObSlave = 
+                          let animName = gfxDir
+                            ^ ( match serverData with
+                                | Client _ | Server _ -> "/A"
+                                | NeitherServerNorClient ->
+                                  if playsInTopHalf then "/B" else "/A")
+                            ^ "saltello"
+                          in
+                          setAnim ~o:h.hp_objSlave ~animName
+                            ~restartIfSameAnimation:true
+                        in                        
+                        let newObLead = 
+                          let animName = gfxDir
+                            ^ ( match serverData with
+                                | Client _ | Server _ -> "/B"
+                                | NeitherServerNorClient ->
+                                  if playsInTopHalf then "/A" else "/B")
+                            ^ "saltello"
+                          in
+                          setAnim ~o:h.hp_objLeading ~animName
+                            ~restartIfSameAnimation:true
+                        in
+                        let m = 
+                        { hpsms_pos = vec2dCreate x z;
+                          hpsms_realizing = NotRealized;
+                          hpsms_askedToSprintInPrevFrame = HasNotAsked;
+                          hpsms_diveIsPossibleNow = DiveNotNeeded;
+                          hpsms_diveHasEverBeenPossible =   
+                            DivePossibilityUnknown
+                        }
+                        in
+                        HP { h with 
+                             hp_objSlave = newObSlave;
+                             hp_objLeading = newObLead;
+                             hp_state = HPS_ManualSearch m
+                        }
+                      in
+                      prepareHumanPlayerForReceiving ~h ~scoreIsEven
+                    | CP c ->
+                      let prepareComputerPlayerForReceiving ~c ~scoreIsEven =
+                        let ob =
+                          let postFix =
+                            if playsInTopHalf then "/Asaltello" else "/Bsaltello"
+                          in
+                          setAnim ~o:c.cp_obj ~animName:(gfxDir ^ postFix)
+                                  ~restartIfSameAnimation:true
+                        in
+                        CP { c with
+                             cp_state = CPS_WaitingForBallToComeTowardsMe ;
+                             cp_umd = {umd_startVel = vec2dCreate 0.0 0.0;
+                                       umd_startPos = vec2dCreate x z;
+                                       umd_timer = 0.0};
+                             cp_obj = ob;
+                           }
+                      in
+                      let attackPref = intentionsDebug c in
+                      print_endline ("attackPref " ^ string_of_int attackPref);
+                      prepareComputerPlayerForReceiving ~c ~scoreIsEven
+                  in
+                  preparePlayerForReceiving ~p ~scoreIsEven
               in
-              let flipCamData d = 
-              { d with
-                  eyeX = -. d.eyeX;
-                  eyeZ = -. d.eyeZ;
-                  lookatX = -. d.lookatX;
-                  lookatZ = -. d.lookatZ
-              }
-              in
-              flipCamData flippedCam
-          in
-          GlMat.load_identity ();
-          GluMat.look_at ~eye:(camData.eyeX, camData.eyeY, camData.eyeZ)
-            ~center:(camData.lookatX, camData.lookatY, camData.lookatZ)
-            ~up:(0.0, 1.0, 0.0) ;
-
-          let timer =
-            match serverData with
-            | Server _ ->
-              updateTimer ~tim:timer ~slowMotionFactor:vd.vd_slowMotionFactor
-            | Client (_,  inc, _) -> ((Marshal.from_channel inc : timerData))
-
-            | NeitherServerNorClient ->
-              updateTimer ~tim:timer ~slowMotionFactor:vd.vd_slowMotionFactor
-          in
-          ( match serverData with
-            | Server (_, _, outc) ->
-              (
-                Marshal.to_channel outc timer [];
-                flush outc
-              )
-            | Client _ | NeitherServerNorClient  -> () );
-
-          let dt = calcDt ~timer ~slowMotionFactor:vd.vd_slowMotionFactor in
-          let noOneIsServing =
-            let isNotServing p =
+              Array.map transf players
+            else
+              players
+        in
+        let players =
+          match serverData with
+          | Server (_, _, outc) ->
+            ( Marshal.to_channel outc players [];
+              flush outc;
+              players )
+          | Client (_, inc, _) -> ((Marshal.from_channel inc : player array))
+          | NeitherServerNorClient -> players
+        in
+        let ball, players, mouse =
+          if vd.vd_pausedWithKey  || pausedOnTheOtherSide then
+            ball, players, vd.vd_mouse
+          else
+            let lockOf p =
               match p with
               | HP h ->
-                ( match h.hp_state with
-                  | HPS_ServingBeforeLaunch _ -> false
-                  | HPS_ServingAfterLaunchAndBeforePressingButton _ -> false
-                  | HPS_ServingAfterPressingButton _ -> false
-                  | HPS_ServingAfterHittingBall _ -> false
-                  | HPS_ManualSearch _ | HPS_RealizingWhereTheBallIs _ 
-                  | HPS_AutoSearchAfterOpening _ 
-                  | HPS_AutoSearchAfterImpactWaitingForAnimToEnd _ 
-                  | HPS_AutoSearchBeforeOpening _ | HPS_GettingUpAfterDive _
-                  | HPS_DivingFake _ -> true)
-              | CP c ->
-                ( match c.cp_state with
-                  | CPS_ServingBeforeLaunch _ -> false
-                  | CPS_ServingAfterLaunchAndBeforeStartingGesture _ -> false
-                  | CPS_ServingAfterHittingBall -> false
-                  | CPS_ServingAfterStartingGesture _ -> false
-                  | CPS_RealizingWhereTheBallIs 
-                  | CPS_TheAnimationIsTerminating _ 
-                  | CPS_GetBackToCenterAtPointFinished _ 
-                  | CPS_ResearchAfterDecidingTheShot _ 
-                  | CPS_ResearchBeforeDecidingTheShot _ 
-                  | CPS_WaitingForBallToComeTowardsMe 
-                  | CPS_WaitingForANewPointToBegin 
-                  | CPS_GetBackToCenterDuringGame _ -> true)
-            in
-            isNotServing players.(0) && isNotServing players.(1)
-          in
-
-          let players =
-            let players =
-              match ball.b_state with
-              | BS_Moving _ -> players
-              | BS_Still _ ->
-                if noOneIsServing then
-                  let transf p =
-                    let p = resetFatigue p in
-                    if (scoreIndex p) = whoServes score then  
-                      match p with
-                      | HP  h ->
-                        let st, ooLe, ooSl = startServiceHuman ~h 
-                            ~scoreIsEven:(serviceIsToTheRight score)
-                            ~serverData
-                        in
-                        HP { h with hp_state = st; 
-                                    hp_objLeading = ooLe; 
-                                    hp_objSlave = ooSl}
-                      | CP c ->
-                        let attackPref = intentionsDebug c in
-                        print_endline ("attackPref  " ^ string_of_int attackPref);
-                        let st, oo, umd = startServiceComputer ~h:c
-                                        ~scoreIsEven:(serviceIsToTheRight score)
-                        in
-                        CP { c with cp_state = st; cp_obj = oo; cp_umd = umd}
-                    else
-                      let preparePlayerForReceiving ~p ~scoreIsEven =
-                        match p with
-                        | HP  h ->
-                          let prepareHumanPlayerForReceiving ~h ~scoreIsEven =
-                            let x, z =
-                              let dirsign = 
-                                if h.hp_playsInTopmostCourtHalf then -. 1.0 else 1.0 
-                              in
-                              if scoreIsEven then
-                                (dirsign *. (courtWt2 -. 50.0),
-                                 dirsign *. (courtHt2 +. 190.0))
-                              else
-                                ( dirsign *. (-. courtWt2 +. 50.0)  ,
-                                  dirsign *. (courtHt2 +. 190.0 ))
-                            in
-                            let prefixSlave = 
-                              match serverData with
-                              | Client _ -> gfxDir ^ "/A"
-                              | Server _ -> gfxDir ^ "/A"
-                              | NeitherServerNorClient ->
-                                if h.hp_playsInTopmostCourtHalf then 
-                                  gfxDir ^ "/B"
-                                else
-                                  gfxDir ^ "/A"
-                            in
-                            let prefixLead = 
-                              match serverData with
-                              | Client _ -> gfxDir ^ "/B"
-                              | Server _ -> gfxDir ^ "/B"
-                              | NeitherServerNorClient ->
-                                if h.hp_playsInTopmostCourtHalf then
-                                  gfxDir ^ "/A" 
-                                else
-                                  gfxDir ^ "/B"
-                            in
-                            let newObLead = 
-                              let animName = prefixLead ^ "saltello" in
-                              setAnim ~o:h.hp_objLeading ~animName
-                                ~restartIfSameAnimation:true
-                            in
-                            let newObSlave = 
-                              let animName = prefixSlave ^ "saltello" in
-                              setAnim ~o:h.hp_objSlave ~animName
-                                ~restartIfSameAnimation:true
-                            in
-                            let m = 
-                            { hpsms_pos = vec2dCreate x z;
-                              hpsms_realizing = NotRealized;
-                              hpsms_askedToSprintInPrevFrame = HasNotAsked;
-                              hpsms_diveIsPossibleNow = DiveNotNeeded;
-                              hpsms_diveHasEverBeenPossible =   
-                                DivePossibilityUnknown
-                            }
-                            in
-                            HP { h with 
-                                 hp_objSlave = newObSlave;
-                                 hp_objLeading = newObLead;
-                                 hp_state = HPS_ManualSearch m
-                            }
-                          in
-                          prepareHumanPlayerForReceiving ~h ~scoreIsEven
-                        | CP c ->
-                          let prepareComputerPlayerForReceiving ~c ~scoreIsEven =
-                            let x, z =
-                              let dirsign = 
-                                if c.cp_playsInTopmostCourtHalf then -. 1.0 else 1.0
-                              in
-                              if scoreIsEven then
-                                (dirsign *. (courtWt2 -. 50.0),
-                                 dirsign *. (courtHt2 +. 190.0))
-                              else
-                                ( dirsign *. (-. courtWt2 +. 50.0)  ,
-                                  dirsign *. (courtHt2 +. 190.0 )) 
-                            and ob = 
-                              let animName = 
-                                let prefix =
-                                  if c.cp_playsInTopmostCourtHalf then
-                                    gfxDir ^ "/A"
-                                  else gfxDir ^ "/B"
-                                in
-                                prefix ^ "saltello" in
-                              setAnim ~o:c.cp_obj ~animName
-                                ~restartIfSameAnimation:true
-                            in
-                            CP { c with
-                                 cp_state = CPS_WaitingForBallToComeTowardsMe ;
-                                 cp_umd = {umd_startVel = vec2dCreate 0.0 0.0;
-                                           umd_startPos = vec2dCreate x z;
-                                           umd_timer = 0.0};
-                                 cp_obj = ob;
-                               }
-                          in
-                          let attackPref = intentionsDebug c in
-                          print_endline ("attackPref  " ^ string_of_int attackPref);
-                          prepareComputerPlayerForReceiving ~c ~scoreIsEven
-                      in
-                      preparePlayerForReceiving ~p 
-                        ~scoreIsEven:(serviceIsToTheRight score)
-                  in
-                  Array.map transf players
-                else
-                  players
-            in
-            match serverData with
-            | Server (_, _, outc) ->
-              (
-                Marshal.to_channel outc players [];
-                flush outc;
-                players )
-            | Client (_, inc, _) -> ((Marshal.from_channel inc : player array))
-            | NeitherServerNorClient -> players
-          in
-
-          let ball, players, mouse =
-            if vd.vd_pausedWithKey  || pausedOnTheOtherSide then
-              ball, players, vd.vd_mouse
-            else
-              let lockOf p =
-                match p with
-                | HP h ->
-                  begin
-                    match h.hp_state with
-                    | HPS_AutoSearchAfterOpening q ->
-                      let v = q.asao_Impact in
-                      let tim = q.asao_TimeToRunFromOpeningToImpact -.
-                                q.asao_UniformMotionData.umd_timer in
-                      HasLocked (projection2d v, tim)
-                    | HPS_AutoSearchBeforeOpening q ->
-                      let v = q.asbo_Impact in
-                      let tim = q.asbo_TimeToRunFromOpeningToImpact -.
-                                q.asbo_UniformMotionData.umd_timer in
-                      HasLocked (projection2d v, tim)
-                    | HPS_ServingBeforeLaunch _ 
-                    | HPS_ServingAfterLaunchAndBeforePressingButton _
-                    | HPS_ServingAfterPressingButton _
-                    | HPS_ServingAfterHittingBall _
-                    | HPS_ManualSearch _
-                    | HPS_RealizingWhereTheBallIs _
-                    | HPS_AutoSearchAfterImpactWaitingForAnimToEnd _
-                    | HPS_GettingUpAfterDive _
-                    | HPS_DivingFake _ -> HasNotLocked
-                  end
-                | CP c -> HasNotLocked (*@@*)
-              in
-              let newball, newp0, newmouse, soundIds =
-                match serverData with
-                | Server _ ->
-                  (match players.(0) with
-                   | HP h ->
-                     updateHumanPlayer ~p:h ~dt ~b:ball ~opt ~serverData
-                       ~opponentCurPos:(curPosOfPlayer players.(1)) 
-                       ~mouse:vd.vd_mouse ~mouseSensitivity ~surf:surface  
-                   | CP c -> assert(false))
-                | Client (_, inc, _) ->
-                  let remoteB, remoteP0, sounds =
-                    (Marshal.from_channel inc : ball * player * soundId list)
-                  in
-                  remoteB, remoteP0, vd.vd_mouse (* leave the same mouse! *), sounds
-                | NeitherServerNorClient ->
-                  ( match players.(0) with
-                    | HP h ->
-                      updateHumanPlayer ~p:h ~dt ~b:ball ~opt ~serverData
-                        ~opponentCurPos:(curPosOfPlayer players.(1)) 
-                        ~mouse:vd.vd_mouse ~mouseSensitivity ~surf:surface  
-                    | CP c ->
-                      updateComputerPlayer ~p:c ~dt ~b:ball ~opt 
-                        ~aidebug:opt.opt_aidebug
-                        ~opponentCurPos:(curPosOfPlayer players.(1))
-                        ~surf:surface ~nextServiceIsFirst
-                        ~opponentLock:(lockOf players.(1)) ~mouse:vd.vd_mouse
-                        ~sounds )
-              in
-              List.iter (fun x -> playSoundId ~sounds ~id:x) soundIds;
-              ( match serverData with
-                | Server (_, _, outc) ->
-                  ( Marshal.to_channel outc (newball, newp0, soundIds) [] ;
-                    flush outc)
-                | Client _ | NeitherServerNorClient -> ());
-
-              let newball2, newp1, newmouse2, soundIds =
-                match serverData with
-                | NeitherServerNorClient ->
-                  ( match players.(1) with
-                    | HP h ->
-                      updateHumanPlayer ~p:h ~dt ~b:newball ~opt 
-                        ~opponentCurPos:(curPosOfPlayer players.(0)) ~serverData
-                        ~mouse:newmouse ~mouseSensitivity ~surf:surface 
-                    | CP c ->
-                      updateComputerPlayer ~p:c ~dt ~b:newball ~opt 
-                        ~aidebug:opt.opt_aidebug
-                        ~opponentCurPos:(curPosOfPlayer players.(0)) 
-                        ~surf:surface ~nextServiceIsFirst
-                        ~opponentLock:(lockOf players.(0)) ~mouse:newmouse
-                        ~sounds)
-                | Server (_, inc, _) ->
-                  let remoteB, remoteP0, sou =
-                    (Marshal.from_channel inc : ball * player * soundId list)
-                  in
-                  remoteB, remoteP0, newmouse, sou
-                | Client _ ->
-                  ( match players.(1) with
-                    | HP h ->
-                      updateHumanPlayer ~p:h ~dt ~b:newball ~opt 
-                        ~opponentCurPos:(curPosOfPlayer players.(0)) ~serverData
-                        ~mouse:newmouse ~mouseSensitivity ~surf:surface 
-                    | CP c -> assert(false))
-              in
-              List.iter (fun x -> playSoundId ~sounds ~id:x) soundIds;
-              ( match serverData with
-                | Client (_, _, outc)  ->
-                  ( Marshal.to_channel outc (newball2, newp1, soundIds) [];
-                    flush outc)
-                | Server _ | NeitherServerNorClient -> ());
-              (newball2, [| newp0 ; newp1 |], newmouse2)
-          in
-          let vd = {vd with vd_mouse = mouse} in
-
-          let score, ball , nextServiceIsFirst, players =
-            if vd.vd_pausedWithKey || pausedOnTheOtherSide then
-              score, ball, nextServiceIsFirst, players
-            else
-              let letComputerKnowHeWon ~p 
-                    ~siolpwhtb (* scoreIndexOfLastPlayerWhoHitTheBall *) 
-                    ~players = 
-                match p with 
-                | CP c ->
-                  if c.cp_scoreIndex = siolpwhtb then
-                    let pwa, pws = 
-                      let opponentCurPos = 
-                        let mOpp = pick (Array.to_list players)
-                                        (fun x -> scoreIndex x != c.cp_scoreIndex)
-                        in
-                        match mOpp with
-                        | None -> assert false
-                        | Some opp -> curPosOfPlayer opp 
-                      in
-                      updateMemoryOfPointsWonAndLost ~p:c ~won:true ~opponentCurPos
+                begin
+                  match h.hp_state with
+                  | HPS_AutoSearchAfterOpening q ->
+                    let tim = q.asao_TimeToRunFromOpeningToImpact -.
+                              q.asao_UniformMotionData.umd_timer
                     in
-                    CP {c with cp_pointsWonAttacking = pwa;
-                        cp_pointsWonStayingBack = pws}
-                  else
-                    p
-                | HP _ -> p
-              in
-              updateBall ~b:ball ~dt ~score ~surf:surface ~sounds 
-                      ~nextServiceIsFirst ~opt ~players ~letComputerKnowHeWon
-          in
-          renderCourt ~surfaceType:surface.s_material 
-            ~surfaceFileName:surfaceFileName ~handleOfTexture:handleOfTexture;
-
-          render ~players:players ~ball:ball ~aidebug:opt.opt_aidebug
-            ~serverData:serverData ~camData:camData ~handleOfTexture:handleOfTexture
-            ~realisticParabolaOpacity:opt.opt_realisticParabolaOpacity ();
-
-          renderText ~players:players ~ball:ball ~serverData:serverData 
-            ~showRemotePause:(pausedOnTheOtherSide && not opt.opt_doNotShowPause)
-            ~showLocalPause:(vd.vd_pausedWithKey && not opt.opt_doNotShowPause)
-            ~windowHt:windowHt ~windowWt:windowWt ~handleOfTexture:handleOfTexture
-            ~score:score;
-          Gl.flush ();
-          Sdlgl.swap_buffers ();
-
-          if opt.opt_showFps then
-            match timer with
-            | TimerData0 -> ()
-            | TimerData1 _ -> ()
-            | TimerData2 t ->
-              if t.t2_numFramesSinceLastFpsUpdate = 0 then
-                print_endline ("in " ^ string_of_int fpsRefreshRate ^ 
-                               " milliseconds you did " ^ 
-                               string_of_int (hd t.t2_frameCountList) ^
-                               " frames.")
-              else
-                ()
+                    HasLocked (projection2d q.asao_Impact, tim)
+                  | HPS_AutoSearchBeforeOpening q ->
+                    let tim = q.asbo_TimeToRunFromOpeningToImpact -.
+                              q.asbo_UniformMotionData.umd_timer
+                    in
+                    HasLocked (projection2d q.asbo_Impact, tim)
+                  | _ -> HasNotLocked
+                end
+              | CP c -> HasNotLocked (*@@*)
+            in
+            let newball, newp0, newmouse, soundIds =
+              match serverData with
+              | Server _ ->
+                (match players.(0) with
+                 | HP h ->
+                   updateHumanPlayer ~p:h ~dt ~b:ball ~opt ~serverData
+                     ~opponentCurPos:(curPosOfPlayer players.(1)) 
+                     ~mouse:vd.vd_mouse ~mouseSensitivity ~surf:surface  
+                 | CP c -> assert(false))
+              | Client (_, inc, _) ->
+                let remoteB, remoteP0, sounds =
+                  (Marshal.from_channel inc : ball * player * soundId list)
+                in
+                remoteB, remoteP0, vd.vd_mouse (* leave the same mouse! *), sounds
+              | NeitherServerNorClient ->
+                ( match players.(0) with
+                  | HP h ->
+                    updateHumanPlayer ~p:h ~dt ~b:ball ~opt ~serverData
+                      ~opponentCurPos:(curPosOfPlayer players.(1)) 
+                      ~mouse:vd.vd_mouse ~mouseSensitivity ~surf:surface  
+                  | CP c ->
+                    updateComputerPlayer ~p:c ~dt ~b:ball ~opt 
+                      ~aidebug:opt.opt_aidebug
+                      ~opponentCurPos:(curPosOfPlayer players.(1))
+                      ~surf:surface ~nextServiceIsFirst
+                      ~opponentLock:(lockOf players.(1)) ~mouse:vd.vd_mouse
+                      ~sounds )
+            in
+            List.iter (fun x -> playSoundId ~sounds ~id:x) soundIds;
+            ( match serverData with
+              | Server (_, _, outc) ->
+                ( Marshal.to_channel outc (newball, newp0, soundIds) [] ;
+                  flush outc)
+              | Client _ | NeitherServerNorClient -> ());
+            let newball2, newp1, newmouse2, soundIds =
+              match serverData with
+              | NeitherServerNorClient ->
+                ( match players.(1) with
+                  | HP h ->
+                    updateHumanPlayer ~p:h ~dt ~b:newball ~opt 
+                      ~opponentCurPos:(curPosOfPlayer players.(0)) ~serverData
+                      ~mouse:newmouse ~mouseSensitivity ~surf:surface 
+                  | CP c ->
+                    updateComputerPlayer ~p:c ~dt ~b:newball ~opt 
+                      ~aidebug:opt.opt_aidebug
+                      ~opponentCurPos:(curPosOfPlayer players.(0)) 
+                      ~surf:surface ~nextServiceIsFirst
+                      ~opponentLock:(lockOf players.(0)) ~mouse:newmouse
+                      ~sounds)
+              | Server (_, inc, _) ->
+                let remoteB, remoteP0, sou =
+                  (Marshal.from_channel inc : ball * player * soundId list)
+                in
+                remoteB, remoteP0, newmouse, sou
+              | Client _ ->
+                ( match players.(1) with
+                  | HP h ->
+                    updateHumanPlayer ~p:h ~dt ~b:newball ~opt 
+                      ~opponentCurPos:(curPosOfPlayer players.(0)) ~serverData
+                      ~mouse:newmouse ~mouseSensitivity ~surf:surface 
+                  | CP c -> assert(false))
+            in
+            List.iter (fun x -> playSoundId ~sounds ~id:x) soundIds;
+            ( match serverData with
+              | Client (_, _, outc)  ->
+                ( Marshal.to_channel outc (newball2, newp1, soundIds) [];
+                  flush outc)
+              | Server _ | NeitherServerNorClient -> ());
+            (newball2, [| newp0 ; newp1 |], newmouse2)
+        in
+        let vd = {vd with vd_mouse = mouse} in
+         let score, ball , nextServiceIsFirst, players =
+          if vd.vd_pausedWithKey || pausedOnTheOtherSide then
+            score, ball, nextServiceIsFirst, players
           else
-            ();
-          mainLoop ~players ~ball ~score ~timer  ~vd ~nextServiceIsFirst  
-        )
+            (* FIXME: This function should be in BallMovement (inside updateBall),
+              but there are some compilation issues that need to be sorted out.*)
+            (* siolpwhtb = scoreIndexOfLastPlayerWhoHitTheBall *)
+            let letComputerKnowHeWon ~p ~siolpwhtb ~players = 
+              match p with 
+              | CP c ->
+                if c.cp_scoreIndex = siolpwhtb then
+                  let pwa, pws = 
+                    let opponentCurPos = 
+                      let mOpp = pick (Array.to_list players)
+                                      (fun x -> scoreIndex x != c.cp_scoreIndex)
+                      in
+                      match mOpp with
+                      | None -> assert false
+                      | Some opp -> curPosOfPlayer opp 
+                    in
+                    updateMemoryOfPointsWonAndLost ~p:c ~won:true ~opponentCurPos
+                  in
+                  CP {c with cp_pointsWonAttacking = pwa;
+                      cp_pointsWonStayingBack = pws}
+                else
+                  p
+              | HP _ -> p
+            in
+            updateBall ~b:ball ~dt ~score ~surf:surface ~sounds 
+                    ~nextServiceIsFirst ~opt ~players ~letComputerKnowHeWon
+        in
+        renderCourt ~surfaceType:surface.s_material 
+          ~surfaceFileName ~handleOfTexture;
+
+        render ~players ~ball ~aidebug:opt.opt_aidebug ~serverData ~camData
+          ~handleOfTexture
+          ~realisticParabolaOpacity:opt.opt_realisticParabolaOpacity ();
+
+        renderText ~players ~ball ~serverData
+          ~showRemotePause:(pausedOnTheOtherSide && not opt.opt_doNotShowPause)
+          ~showLocalPause:(vd.vd_pausedWithKey && not opt.opt_doNotShowPause)
+          ~windowHt ~windowWt ~handleOfTexture ~score;
+        Gl.flush ();
+        Sdlgl.swap_buffers ();
+         if opt.opt_showFps then
+          match timer with
+          | TimerData0 | TimerData1 _ -> ()
+          | TimerData2 t ->
+            if t.t2_numFramesSinceLastFpsUpdate = 0 then
+              print_endline ("in " ^ string_of_int fpsRefreshRate 
+                  ^ " milliseconds you did " 
+                  ^ string_of_int (hd t.t2_frameCountList) ^ " frames.")
+            else
+              ()
+        else
+          ();
+        mainLoop ~players ~ball ~score ~timer ~vd ~nextServiceIsFirst  
+      )
     in
 
     mainLoop ~players ~ball ~score ~timer:TimerData0
