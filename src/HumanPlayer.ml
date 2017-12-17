@@ -14,16 +14,21 @@ let createHumanPlayer ~playsInTopmostCourtHalf ~plName ~scoreIndex ~startPos
     ~serverData ~animdata =
   let obLead =
     match serverData with
-    | Client _ ->
-      create3dObj ~dirs:animdata  ~initialAnim:(gfxDir ^ "/Bsaltello" )
+    | Client _ -> create3dObj ~dirs:animdata ~initialAnim:(gfxDir ^ "/Bsaltello")
     | Server _ | NeitherServerNorClient  ->
       create3dObj ~dirs:animdata  ~initialAnim:(gfxDir ^ "/Bsaltello")
   in
   let obSlave =
     match serverData with
-    | Client _ ->
-      create3dObj ~dirs:animdata  ~initialAnim:(gfxDir ^ "/Asaltello" )
+    | Client _ -> create3dObj ~dirs:animdata ~initialAnim:(gfxDir ^ "/Asaltello")
     | Server _ | NeitherServerNorClient -> obLead
+  in
+  let startHtForTopSpinGround, startHtForBackSpinGround, startHtForVolleys = 
+  ( match plName with
+    | Mats -> (netHtBorder +. 65.0, netHtBorder +. 16.0, netHtBorder)
+    | Pete -> (netHtBorder, netHtBorder +. 6.0, netHtBorder +. 25.0)
+    | Ivan -> (netHtBorder +. 74.0, netHtBorder +. 6.0, netHtBorder +. 35.0)
+  );
   in
   HP 
   { hp_objLeading = obLead;
@@ -49,22 +54,9 @@ let createHumanPlayer ~playsInTopmostCourtHalf ~plName ~scoreIndex ~startPos
                  hpsms_diveIsPossibleNow = DiveNotNeeded;
                  hpsms_diveHasEverBeenPossible = DivePossibilityUnknown
               };
-    hp_startHtOverNetForTopSpinGround = 
-    ( match plName with
-      | Mats -> netHtBorder +. 65.0
-      | Pete -> netHtBorder 
-      | Ivan -> netHtBorder +. 74.0);
-    hp_startHtOverNetForBackSpinGround =
-    ( match plName with
-      (* FIXME: Shouldn't the next line also star with '|'? *)
-      Mats -> netHtBorder +. 16.0 
-      | Pete -> netHtBorder +. 6.0
-      | Ivan -> netHtBorder +. 6.0);
-     hp_startHtOverNetForVolleys =
-       ( match plName with 
-         | Pete -> netHtBorder
-         | Mats -> netHtBorder +. 25.0
-         | Ivan -> netHtBorder +. 35.0);
+    hp_startHtOverNetForTopSpinGround = startHtForTopSpinGround;
+    hp_startHtOverNetForBackSpinGround = startHtForBackSpinGround;
+    hp_startHtOverNetForVolleys = startHtForVolleys;
   }
 
 let calcMinShotPower ~ballVelZ ~exploit = 
@@ -86,18 +78,18 @@ let startServiceHuman ~scoreIsEven ~h ~serverData =
   let state =
     let pos = 
       let dirsign = if h.hp_playsInTopmostCourtHalf then -. 1.0 else 1.0 in
-      let posx = if scoreIsEven then 160.0 *. dirsign else -. 160.0 *. dirsign in
+      let posx = dirsign *. (if scoreIsEven then 160.0 else -. 160.0) in
       vec2dCreate posx (dirsign *. (courtHt2 +. 50.0))
     in
     HPS_ServingBeforeLaunch (scoreIsEven, pos)
   in
+  let offlineDirPrefix = if h.hp_playsInTopmostCourtHalf then "/A" else "/B" in
   let objLeading = 
     let prefix = 
       match serverData with
       | Client _ -> gfxDir ^ "/B"
       | Server _ -> gfxDir ^ "/B"
-      | NeitherServerNorClient ->
-        if h.hp_playsInTopmostCourtHalf then gfxDir ^ "/A" else gfxDir ^ "/B"
+      | NeitherServerNorClient -> gfxDir ^ offlineDirPrefix
     in
     setAnim ~o:h.hp_objLeading ~animName:(prefix ^ "servizio")
             ~restartIfSameAnimation:true
@@ -107,16 +99,14 @@ let startServiceHuman ~scoreIsEven ~h ~serverData =
       match serverData with
       | Client _ -> gfxDir ^ "/A"
       | Server _ -> gfxDir ^ "/A"
-      | NeitherServerNorClient ->
-        if h.hp_playsInTopmostCourtHalf then gfxDir ^ "/A" else gfxDir ^ "/B"
+      | NeitherServerNorClient -> gfxDir ^ offlineDirPrefix
     in
     setAnim ~o:h.hp_objSlave ~animName:(prefix ^ "servizio") 
             ~restartIfSameAnimation:true 
   in
   assert
   ( match objLeading.o3d_animState  with
-    (* FIXME: Shouldn't the next line also star with '|'? *)
-    Animated _  -> true
+    | Animated _  -> true
     | NotAnimated | PausedDuringService -> false);
   (state,  objLeading, objSlave)
 
@@ -154,10 +144,7 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
        	   OBBLIGATO a flippare se gioca in alto! *)
     let impact = if playingAbove then flipxz3 impact else impact 
     and bounceDesired = 
-      if playingAbove then 
-        flipxz2 bounceDesired 
-      else
-        bounceDesired
+      if playingAbove then flipxz2 bounceDesired else bounceDesired
     in
     let impact2d = projection2d impact in 
     let pointOverNet =
@@ -179,16 +166,15 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
     let q1 = q0 -. qr in
     let y1 = y0 -. yn in
 
-    let denom = ( -. s2 *. y0 +. s1  *. q1 ) *. 
-                ( s1 *. q1 -. s1 *. q0+. s2 *. y1 -. s2*. y0 ) 
+    let denom = ( -. s2 *. y0 +. s1  *. q1 )
+                *. ( s1 *. q1 -. s1 *. q0+. s2 *. y1 -. s2*. y0 ) 
     in
     assert (denom != 0.0);
 
     let discr = -. (( -. s2 *. y1  +. s1 *. q0 ) *. ( -. y0 *. q0 +. y1 *. q1 )) 
                    /. denom
     in
-    if discr  < 0.0 then
-      None
+    if discr  < 0.0 then None
     else
       let tn = sqrt discr in
       assert  (tn != 0.0) ; 
@@ -202,20 +188,20 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
 
   let theShotIsNotTooVertical ~impact ~aim ~ht ~spin  = 
     let may = buildTrajFromTwoPointsAndHeight ~impact ~htOverNet:ht
-        ~spin ~bounceDesired:aim ~targetRect:None in
+        ~spin ~bounceDesired:aim ~targetRect:None
+    in
     match may with
     | None -> None (* traj impossible *)
     | Some tr ->
       let vertical = vec3dCreate 0.0 1.0 0.0 in
       let ang = smallestAngleBetween3d vertical tr.startVel 
       and minAngle = 
-        if spin < -. abs_float (2.0 *. spinForVolee )
-        (* it is a backspin ground stroke *)
-        then
-          75.0 (* prevent dropshot from being too easy *)
-        else
-          (* with 40.0, drop volees are totally impossible *)
-          40.0 in
+        if spin < -. abs_float (2.0 *. spinForVolee ) then
+          75.0 (* it is a backspin ground stroke *)
+               (* prevent dropshot from being too easy *)
+        else 
+          40.0 (* with 40.0, drop volees are totally impossible *)
+      in
       Some (ang > degToRad minAngle)
   in
 
@@ -256,20 +242,19 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
 
   let rec shortestBounceSuchThatPowerIsNotTooLittle ~bou ~count
       ~minPowerAvailable ~impact ~htOverNet ~spin = 
-    if count = 0 then
-      None 
+    if count = 0 then None 
     else
       let maybePow = 
           findNeededPower ~impact ~htOverNet ~spin ~bounceDesired:bou in
       match maybePow with
       | None -> None
       | Some pow ->
-        if pow >= minPowerAvailable then
-          Some bou
+        if pow >= minPowerAvailable then Some bou
         else
           let newCandidateBounceLonger = 
             let deltaXZ = 
-              vec2dMulScalar 10.0 (normalize2d (vec2dSub bou (projection2d impact))) 
+              vec2dMulScalar 10.0
+                             (normalize2d (vec2dSub bou (projection2d impact))) 
             in
             vec2dAdd bou deltaXZ
           in
@@ -279,20 +264,19 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
   in
   let rec shortestBounceSuchThatAngleIsNotTooVert ~bou ~count ~impact 
       ~htOverNet ~spin = 
-    if count = 0 then
-      None 
+    if count = 0 then None 
     else
       let maybeNotTooVert = theShotIsNotTooVertical ~impact ~ht:htOverNet
           ~spin ~aim:bou  in
       match maybeNotTooVert with
       | None -> None
       | Some isNotTooVert ->
-        if isNotTooVert then
-          Some bou
+        if isNotTooVert then Some bou
         else
           let newCandidateBounceLonger = 
             let deltaXZ = 
-              vec2dMulScalar 10.0 (normalize2d (vec2dSub bou (projection2d impact)))
+              vec2dMulScalar 10.0
+                             (normalize2d (vec2dSub bou (projection2d impact)))
             in
             vec2dAdd bou deltaXZ
           in
@@ -301,24 +285,24 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
   in
   let rec longestBounceSuchThatPowerIsNotTooMuch ~bou ~count ~maxPowerAvailable
         ~impact ~htOverNet ~spin = 
-    if count = 0 then
-      None 
+    if count = 0 then None 
     else
-      let maybePow = findNeededPower ~impact ~htOverNet ~spin ~bounceDesired:bou in
+      let maybePow =
+        findNeededPower ~impact ~htOverNet ~spin ~bounceDesired:bou
+      in
       match maybePow with
       | None -> None
       | Some pow ->
-        if pow <= maxPowerAvailable then
-          Some bou
+        if pow <= maxPowerAvailable then Some bou
         else
           let newCandidateBounceShorter = 
             let deltaXZ = 
-              vec2dMulScalar 10.0 (normalize2d (vec2dSub (projection2d impact) bou))
+              vec2dMulScalar 10.0 
+                              (normalize2d (vec2dSub (projection2d impact) bou))
             in
             vec2dAdd bou deltaXZ
           in
-          if newCandidateBounceShorter.z2 *. impact.z3 > 0.0 then
-            None
+          if newCandidateBounceShorter.z2 *. impact.z3 > 0.0 then None
           else
             longestBounceSuchThatPowerIsNotTooMuch 
               ~bou:newCandidateBounceShorter ~count:(count -1) 
@@ -327,8 +311,7 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
 
   let rec highestHtSuchThatTheAngleIsNotVertAndPowerIsNotTooSmall ~ht ~count
       ~aim ~impact ~spin ~minPowerAvailable  = 
-    if count = 0 then
-      None 
+    if count = 0 then None 
     else
       let maybeVert = theShotIsNotTooVertical ~impact ~aim ~ht ~spin  in
       match maybeVert with
@@ -341,8 +324,7 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
           match maybePow with
           | None -> None
           | Some pow ->
-            if pow > minPowerAvailable then
-              Some ht
+            if pow > minPowerAvailable then Some ht
             else
               highestHtSuchThatTheAngleIsNotVertAndPowerIsNotTooSmall
                 ~ht:(ht -. 1.0) ~count:(count -1 ) ~aim ~spin ~impact
@@ -373,8 +355,7 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
 
   let rec lowestHtSuchThatThePowerIsNotTooMuchAndTheParabolaIsPossible ~ht
         ~count ~impact ~desiredAim ~spin ~maxPowerAvailable =
-    if count = 0 then
-      None (* happens on dive *)
+    if count = 0 then None (* happens on dive *)
     else
       let maybePow =  findNeededPower ~impact ~htOverNet:ht ~spin
           ~bounceDesired:desiredAim
@@ -382,8 +363,7 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
       match maybePow with
       | None -> None
       | Some pow ->
-        if pow <= maxPowerAvailable then
-          Some ht
+        if pow <= maxPowerAvailable then Some ht
         else
           lowestHtSuchThatThePowerIsNotTooMuchAndTheParabolaIsPossible
             ~ht:(ht +. 1.0) ~count:(count -1)
@@ -391,8 +371,7 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
   in
   let rec lowestHtSuchThatTheParabolaIsPossible ~ht ~count ~impact ~desiredAim 
         ~spin  =
-    if count = 0 then
-      None (* happens on dive *)
+    if count = 0 then None (* happens on dive *)
     else
       let maybePow =  findNeededPower ~impact ~htOverNet:ht ~spin
           ~bounceDesired:desiredAim
@@ -422,12 +401,12 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
           else
             courtHt4 +. 300.0 in
         let xAim = r.brh_impact.x3 in
-        vec2dCreate xAim idealZAim in
-      (* what can be wrong now? Everything: the parabola can be
-         	       impossible (e.g. impact high, low htOverNet, long
-         	       bounce); the needed power can be too small or too big;
-         	       the parabola angle with the y axis can be too small
-         	       (too vertical). *)
+        vec2dCreate xAim idealZAim
+      in
+      (* what can be wrong now? Everything: the parabola can be impossible (e.g.
+      impact high, low htOverNet, long bounce); the needed power can be too
+      small or too big; the parabola angle with the y axis can be too small
+      (too vertical). *)
       let maybeHigherHt = 
         let idealHtOverNet = 
           match r.brh_researchKind with
@@ -448,24 +427,21 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
       match maybeHigherHt with 
       | None -> None
       | Some higherHt ->
-        (* the traj is now possible. It may still be that
-           		         the needed power is too little (drop volley), 
-           			 too much (stretch near the ground line), 
-           			 or that the angle is too vertical (ivan volley).
-
-           			 If the needed power is too much, try to make the shot shorter.
-
-           			 If the needed power is too little, try to decrease the ht, 
-           			 checking that the parabola does not become impossible again.
-
-           			 If the angle is too vertical, make the shot longer.
-           		      *)
+        (* the traj is now possible. It may still be that the needed power is
+        too little (drop volley), too much (stretch near the ground line), or
+        that the angle is too vertical (ivan volley).
+        If the needed power is too much, try to make the shot shorter.
+        If the needed power is too little, try to decrease the ht, checking that
+        the parabola does not become impossible again.
+        If the angle is too vertical, make the shot longer. *)
 
         let angleTooVertical = 
           let mNTV = theShotIsNotTooVertical ~impact:r.brh_impact ~aim:idealAim
                       ~ht:higherHt ~spin
           in
           match mNTV with
+          (* TODO: If we know it's not possible, why bother verifying? Check if
+          it is really not possible and change the code accordingly *)
           | None -> assert false (* we know it's not impossible *)
           | Some notTooVert -> not notTooVert 
         and neededPowerTooLittle, neededPowerTooMuch =
@@ -554,12 +530,9 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
     let up = mouse.m_rightButtonPressed in
     let down = mouse.m_leftButtonPressed in
     let step =
-      if up then
-        stepBig
-      else if htOverNet < 160.0 then
-        stepSmall 
-      else if htOverNet < 300.0 then
-        stepMid 
+      if up then stepBig
+      else if htOverNet < 160.0 then stepSmall 
+      else if htOverNet < 300.0 then stepMid 
       else stepBig
     in
     let rejected = ( bounceDesired, htOverNet) in
@@ -574,6 +547,10 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
       match maybeVer with
       | None -> rejected (* reject impossible parabola *)
       | Some isNotTooVer ->
+        let doAllTestsAlias desiredAim = 
+          doAllTests ~impact ~spin ~ht:desiredHt ~aim:desiredAim
+            ~minPowerAvailable ~maxPowerAvailable ~reject:(Some rejected)
+        in
         if isNotTooVer then
           (* increasing the height, the power may have become too much OR too little *)
           let maybePow = findNeededPower ~impact ~htOverNet:desiredHt ~spin 
@@ -589,10 +566,7 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
               in
               match mBounceShorter with
               | None -> rejected
-              | Some bounceShorter ->
-                  doAllTests ~impact ~spin ~ht:desiredHt ~aim:bounceShorter
-                      ~minPowerAvailable ~maxPowerAvailable 
-                      ~reject:(Some rejected) 
+              | Some bounceShorter -> doAllTestsAlias bounceShorter
             else if pow < minPowerAvailable then
               let mBounceLonger = shortestBounceSuchThatPowerIsNotTooLittle 
                   ~bou:bounceDesired ~count:1000 ~htOverNet:desiredHt ~spin 
@@ -600,29 +574,21 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
               in
               match mBounceLonger with
               | None -> rejected
-              | Some bounceLonger ->
-                doAllTests ~impact ~spin ~ht:desiredHt ~aim:bounceLonger
-                  ~minPowerAvailable ~maxPowerAvailable ~reject:(Some rejected)
-            else
-              doAllTests ~impact ~spin ~ht:desiredHt ~aim:bounceDesired
-                ~minPowerAvailable ~maxPowerAvailable ~reject:(Some rejected)
+              | Some bounceLonger -> doAllTestsAlias bounceLonger
+            else doAllTestsAlias bounceDesired
         else
           let mBounceLonger = shortestBounceSuchThatAngleIsNotTooVert
               ~bou:bounceDesired ~impact ~spin ~count:1000 ~htOverNet:desiredHt
           in
           match mBounceLonger with
           | None -> rejected
-          | Some bounceLonger ->
-            doAllTests ~impact ~spin ~aim:bounceLonger ~ht:desiredHt 
-              ~reject:(Some rejected)  ~minPowerAvailable ~maxPowerAvailable 
-
+          | Some bounceLonger -> doAllTestsAlias bounceLonger
     else if down then
       (* Left mouse button pressed. This means that the player went for a more
-      flat trajectory *)
-      (* what can happen when I push down? The parabola can 
-         	       become impossible, and the needed power can become too much *)
+      flat trajectory what can happen when I push down? The parabola can 
+      become impossible, and the needed power can become too much *)
       let desiredHt = htOverNet -. step *. dt *.  55.0 in
-      if desiredHt < 10.0 then
+      if desiredHt < 10.0 then 
         rejected
       else
         let necessaryPower = findNeededPower ~impact
@@ -729,14 +695,13 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
     let qual = 
       if impact.y3 < 3.0 then 
         3 
-      else if isVolley then
-        if attackIntention then 1 else 2
-      else if attackIntention then 2 else 1
+      else 
+        if isVolley then if attackIntention then 1 else 2
+        else if attackIntention then 2 else 1
     (* XXX: Unused variable
     and passingShot = ((abs_float opponentCurPos.z2) <  courtHt2 -. 100.0) *)
     and myMaxSpeed = 
-      if AI.isAttacking playerCurPos then
-        p.hp_pc.pc_maxSpeedInFreeRunUnderNet 
+      if AI.isAttacking playerCurPos then p.hp_pc.pc_maxSpeedInFreeRunUnderNet 
       else p.hp_pc.pc_maxSpeedInFreeRunStayBack
     in
     if attackIntention then
@@ -756,10 +721,8 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
         let createResearchAndJudgeIt ~p  ~isTopSpin ~impact ~playerCurPos ~ballPos
             ~ballDir ~ball ~s ~opponentCurPos ~surf ~attackIntention =
           let impactIsOutSideOfMyCourtSide = 
-            if p.hp_playsInTopmostCourtHalf then
-              impact.z2 > -. 50.0
-            else
-              impact.z2 < 50.0 in
+            if p.hp_playsInTopmostCourtHalf then impact.z2 > -. 50.0
+            else impact.z2 < 50.0 in
           if impactIsOutSideOfMyCourtSide then
             None
           else
@@ -792,14 +755,12 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
                      p.hp_pc.pc_maxSpeedInNormalResearchStayBack)
                   /. p.hp_fatigueData.fatigueDivisor 
                 and isForehand = 
-                  if p.hp_playsInTopmostCourtHalf then
-                    impact.x2 < playerCurPos.x2
-                  else
-                    impact.x2 > playerCurPos.x2 in
+                  if p.hp_playsInTopmostCourtHalf then impact.x2 < playerCurPos.x2
+                  else impact.x2 > playerCurPos.x2 in
                 let footPosAtImpactTime ~deltaXFootRacket ~deltaZ = 
                   if p.hp_playsInTopmostCourtHalf then
                     let z = impact.z2 -. deltaZ in
-                    if isForehand then
+                    if isForehand then 
                       vec2dCreate (impact.x2 +. deltaXFootRacket) z
                     else
                       vec2dCreate (impact.x2 -. deltaXFootRacket ) z
@@ -820,14 +781,11 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
                 assert (deltaXSmash != 0.0);
 
                 let computeDeltaOpening  ~isForehand  ~researchKind= 
-                  let prefix =
+                  let prefix = gfxDir ^
                     match serverData with
-                    | Client _ -> gfxDir ^ "/B"
+                    | Client _ -> "/B"
                     | Server _ | NeitherServerNorClient ->
-                      if p.hp_playsInTopmostCourtHalf then
-                        gfxDir ^ "/A"
-                      else
-                        gfxDir ^ "/B"
+                      if p.hp_playsInTopmostCourtHalf then "/A" else "/B"
                   in
 
                   let animName = 
@@ -856,8 +814,7 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
                       if isForehand then "drittoallungov" else "rovescioallungov"
                     | RKH_StretchForward _ ->
                       prefix ^
-                      if isForehand then
-                        "drittoforwardstretch"
+                      if isForehand then "drittoforwardstretch"
                       else "rovescioforwardstretch"
                   in
                   let an = 
@@ -933,13 +890,9 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
                     ~runAngle:runAngleSmash ~signX:signXSmash ~deltaX:deltaXSmash
                 else
                   let vot = 
-                    if isVolley then
-                      VOT_Volee 
-                    else
-                    if isTopSpin then
-                      VOT_NotVolee Topspin
-                    else
-                      VOT_NotVolee Backspin
+                    if isVolley then VOT_Volee 
+                    else if isTopSpin then VOT_NotVolee Topspin
+                    else VOT_NotVolee Backspin
                   in
                   let deltaOpening =
                     computeDeltaOpening ~researchKind:(RKH_Normal vot) 
@@ -1028,10 +981,8 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
                         None
         in (* createResearchAndJudgeIt *)
         let theBallHasAlreadyCrossedTheNet =
-          if p.hp_playsInTopmostCourtHalf then
-            (curBallPos ball).z3 < -. 50.0
-          else
-            (curBallPos ball).z3 > 50.0
+          if p.hp_playsInTopmostCourtHalf then (curBallPos ball).z3 < -. 50.0
+          else (curBallPos ball).z3 > 50.0
         in
         let numPointsToJudge = 180 in
         let secondPointForResearch =
@@ -1086,8 +1037,7 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
       let better (r1, (q1, v1)) (r2, (q2, v2)) =
         if q1 < q2 then (r1, (q1, v1))
         else if q2 < q1 then (r2, (q2, v2))
-        else
-        if v1 > v2 then r1, (q1, v1) else r2, (q2, v2)
+        else if v1 > v2 then r1, (q1, v1) else r2, (q2, v2)
       in
       match smashVolleys with
       | [] ->
@@ -1110,8 +1060,7 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
           ( let normalShots =
               let isNormalShot (res, _) =
                 match res.brh_researchKind with
-                (* FIXME: Shouldn't this start with a '|' ? *)
-                RKH_Normal _ -> true 
+                | RKH_Normal _ -> true 
                 | RKH_Dive _ | RKH_StretchForward _ | RKH_Smash _ -> false
               in
               List.filter isNormalShot researches'
@@ -1166,18 +1115,14 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
 
     let prefixSlave = 
       match serverData with
-      | Client _ ->
-        gfxDir ^ "/A"
-      | Server _ ->
-        gfxDir ^ "/A"
+      | Client _ -> gfxDir ^ "/A"
+      | Server _ -> gfxDir ^ "/A"
       | NeitherServerNorClient ->
         if p.hp_playsInTopmostCourtHalf then gfxDir ^ "/B" else gfxDir ^ "/A"
     and prefixLead = 
       match serverData with
-      | Client _ ->
-        gfxDir ^ "/B"
-      | Server _ ->
-        gfxDir ^ "/B"
+      | Client _ -> gfxDir ^ "/B"
+      | Server _ -> gfxDir ^ "/B"
       | NeitherServerNorClient ->
         if p.hp_playsInTopmostCourtHalf then gfxDir ^ "/A" else gfxDir ^ "/B"
     in
@@ -1187,23 +1132,21 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
         ~newSounds ~bsm ~realizationState ~newFatigueData
         ~diveHasEverBeenPossible ~newSprint = 
       let ballIsComingTowardsMe  = 
-        if p.hp_playsInTopmostCourtHalf then
-          bsm.bsm_trajectory.startVel.z3 < 0.0
-        else
-          bsm.bsm_trajectory.startVel.z3 > 0.0
+        if p.hp_playsInTopmostCourtHalf then bsm.bsm_trajectory.startVel.z3 < 0.0
+        else bsm.bsm_trajectory.startVel.z3 > 0.0
       in
       let ballIsAboutToHitNet = 
         let maybeT = whenWillTheTrajectoryHitTheNet bsm.bsm_trajectory in
         match maybeT with
         | None -> false
-        | Some _ -> (bsm.bsm_bouncesSoFar = 0) in
+        | Some _ -> (bsm.bsm_bouncesSoFar = 0)
+      in
       let ballWillGoOut = 
         bsm.bsm_bouncesSoFar = 0
         && (match bsm.bsm_trajectory.targetRect with None -> false | _ -> true)
         && not (theTrajectoryFallsInTheTargetRect bsm.bsm_trajectory)
       in
-      if
-        ballIsComingTowardsMe && bsm.bsm_isItGoodSoFar
+      if ballIsComingTowardsMe && bsm.bsm_isItGoodSoFar
         && (not ballIsAboutToHitNet) && (not ballWillGoOut)
       then
         match  realizationState with
@@ -1218,9 +1161,7 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
             newSounds)
 
         | Realized ->
-          let attackIntention =
-            abs_float newPos.z2 < courtHt2 *. 3.0 /. 4.0
-          in
+          let attackIntention = abs_float newPos.z2 < courtHt2 *. 3.0 /. 4.0 in
           let res = chooseBestResearch ~isTopSpin:true ~playerCurPos:newPos
               ~opponentCurPos ~ballPos:(projection2d (curBallPos b) )
               ~ballDir:(projection2d (curBallVel bsm) ) ~ball:b ~surf
@@ -1229,18 +1170,12 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
           let doFakeDive ~reasonForMiss  = 
             let diveAngle =
               let diveDir = 
-                let fakeImpact =
-                  let ballDir = 
-                    straightLineFromPointAndDir (projection2d (curBallPos b))
-                      (projection2d (curBallVel bsm))
-                  in
-                  let horizLine = 
-                    let pz = newPos.z2 in 
-                    {sl_a = 0.0 ; sl_b = 1.0; sl_c = -. pz}
-                  in
-                  intersectionOfStraightLines ballDir horizLine
+                let ballDir = 
+                  straightLineFromPointAndDir (projection2d (curBallPos b))
+                    (projection2d (curBallVel bsm))
                 in
-                vec2dSub fakeImpact newPos
+                let horizLine = {sl_a = 0.0 ; sl_b = 1.0; sl_c = -. newPos.z2} in
+                vec2dSub (intersectionOfStraightLines ballDir horizLine) newPos
               in
               let leftAxis = vec2dCreate (dirsign *. (-. 1.0)) 0.0 in
               smallestAngleBetween leftAxis diveDir
@@ -1402,9 +1337,7 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
                  (match ts with
                   | Topspin -> true
                   | Backspin -> false))
-            | RKH_Dive _ -> false
-            | RKH_StretchForward _ -> false
-            | RKH_Smash _ -> false
+            | RKH_Dive _ | RKH_StretchForward _ | RKH_Smash _ -> false
           in
           if Sdlkey.is_key_pressed Sdlkey.KEY_z && backSpinMakesSense  then
             let attackIntention =
@@ -1452,9 +1385,7 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
              | Topspin -> p.hp_pc.pc_topSpin
              | Backspin -> p.hp_pc.pc_backSpin
           )
-        | RKH_Dive _ -> spinForVolee
-        | RKH_StretchForward _ -> spinForVolee
-        | RKH_Smash _ -> spinForVolee
+        | RKH_Dive _ | RKH_StretchForward _ | RKH_Smash _ -> spinForVolee
       in
       let newBounce, htOverNet = 
         let  minPowerAvailable = calcMinShotPower
@@ -1551,9 +1482,7 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
               | Topspin -> p.hp_pc.pc_topSpin
               | Backspin -> p.hp_pc.pc_backSpin
           )
-        | RKH_Dive _ -> spinForVolee
-        | RKH_StretchForward _ -> spinForVolee
-        | RKH_Smash _ -> spinForVolee
+        | RKH_Dive _ | RKH_StretchForward _ | RKH_Smash _ -> spinForVolee
       in
       let newBounce2, htOverNet2 = 
         let  minPowerAvailable = calcMinShotPower
@@ -1628,8 +1557,7 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
                 | VOT_NotVolee Backspin -> [ SoundLightShot; SoundNormalShot]
                 | VOT_NotVolee Topspin ->
                   let powerIsCloseToMaxAndAboveThreshold = 
-                    let po = length3d traj.startVel in
-                    po > 3000.0
+                    (length3d traj.startVel) > 3000.0
                   in
                   let fatigueIsHigh = p.hp_fatigueData.fatigueDivisor > 1.35 in
                   if powerIsCloseToMaxAndAboveThreshold then
@@ -1745,8 +1673,7 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
         let wouldLikeToSprint =  Sdlkey.is_key_pressed Sdlkey.KEY_x in
         let maybeVelDir = 
           let remoteSign = match serverData with
-            (* FIXME: Shouldn't this start with '|' *)
-            Client _ -> -. 1.0
+            | Client _ -> -. 1.0
             | Server _ | NeitherServerNorClient -> 1.0
           in
           let mouseVec =
@@ -1755,13 +1682,9 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
             (normalize2d (vec2dCreate dx dz ))
           in
           let maybeDxDz = 
-            if mouse.m_secondsSinceLastMouseMotion > mouseRefresh then
-              None
-            else
-            if mouse.m_xRel = 0 && mouse.m_yRel = 0 then
-              None
-            else
-              Some mouseVec
+            if mouse.m_secondsSinceLastMouseMotion > mouseRefresh then None
+            else if mouse.m_xRel = 0 && mouse.m_yRel = 0 then None
+            else Some mouseVec
           in
 
           if wouldLikeToSprint then
@@ -1896,32 +1819,21 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
     | HPS_ServingBeforeLaunch (right, pos) ->
       let newst, mouse2 =
         if p.hp_objLeading.o3d_animState = PausedDuringService then
-          let angle = 
-            if right then
+          let angle =
+            let calcAngle ~sign =
               let dir = 
-                let src = curPosOfHumanPlayer p in
-                let dest = 
-                  vec2dCreate (-. dirsign *. courtWt4) 
-                    (-. dirsign *. (courtHt4 +. 50.0))
+                let dest = vec2dCreate (sign *. dirsign *. courtWt4)
+                                     (-. dirsign *. (courtHt4 +. 50.0))
                 in
-                vec2dSub dest  src in
-              if p.hp_playsInTopmostCourtHalf then
-                -. (smallestAngleWithZAxis dir)
-              else
-                -. (smallestAngleWithNegativeZAxis dir)
-            else
-              let dir = 
-                let src = curPosOfHumanPlayer p in
-                let dest = 
-                  vec2dCreate ( dirsign *. courtWt4) 
-                    (-. dirsign *. (courtHt4 +. 50.0))
-                in
-                vec2dSub dest  src
+                vec2dSub dest (curPosOfHumanPlayer p)
               in
-              if p.hp_playsInTopmostCourtHalf then
-                smallestAngleWithZAxis dir
+              if p.hp_playsInTopmostCourtHalf then 
+                sign *. (smallestAngleWithZAxis dir)
               else
-                smallestAngleWithNegativeZAxis dir
+                sign *. (smallestAngleWithNegativeZAxis dir)
+            in
+            if right then calcAngle ~sign:(-. 1.0)
+            else calcAngle ~sign:(1.0)
           in
           (HPS_ServingAfterLaunchAndBeforePressingButton (right, angle, pos),
            {mouse with m_secondsSinceLastMouseMotion = 
@@ -1949,27 +1861,22 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
         let ang = 
           let spostam =
             let deltaX = 
-              let forseFlippato x = 
-                let remoteSign = 
-                  match serverData with 
-                  | Client _ -> -. 1.0
-                  | Server _ | NeitherServerNorClient -> 1.0 
-                in
-                if p.hp_playsInTopmostCourtHalf then
-                  -. x *. remoteSign
-                else
-                  x *. remoteSign 
+              let remoteSign = 
+                match serverData with 
+                | Client _ -> -. 1.0
+                | Server _ | NeitherServerNorClient -> 1.0 
               in
-              forseFlippato (float_of_int mouse.m_xRel) in
-            deltaX *. dt *. 0.09 in
-          let filtrato ang = 
-            if ang > pi_2 then
-              pi_2
-            else if ang < -. pi_2 then
-              -. pi_2
-            else
-              ang in
-          filtrato (ang +. spostam) in
+              let x = float_of_int mouse.m_xRel in
+              if p.hp_playsInTopmostCourtHalf then -. x *. remoteSign
+              else x *. remoteSign 
+            in
+            deltaX *. dt *. 0.09
+          in
+          let ang = (ang +. spostam) in
+          if ang > pi_2 then pi_2
+          else if ang < -. pi_2 then -. pi_2
+          else ang
+        in
         let bally = (curBallPos b).y3 in
         let ballIsGoingDownOrStill = 
           match b.b_state with
@@ -2016,8 +1923,7 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
         if newT >= durationOfCurAnimUpToImpactFrame ~o:p.hp_objLeading then
           HPS_ServingAfterHittingBall  h.hpssapb_pos
         else
-          HPS_ServingAfterPressingButton 
-            {h with hpssapb_Timer = newT}
+          HPS_ServingAfterPressingButton {h with hpssapb_Timer = newT}
       in
       let b2 , sounds= 
         if newT >= durationOfCurAnimUpToImpactFrame ~o:p.hp_objLeading then
@@ -2041,19 +1947,15 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
             let velz = -. velxz *. (cos ang) *. dirsign in
             let rett = 
               if not p.hp_playsInTopmostCourtHalf then
-                if h.hpssapb_ToTheRight then
-                  upperLeftServiceBox
-                else
-                  upperRightServiceBox
+                if h.hpssapb_ToTheRight then upperLeftServiceBox
+                else upperRightServiceBox
               else
-              if h.hpssapb_ToTheRight then
-                lowerLeftServiceBox
-              else
-                lowerRightServiceBox in		    
-            let spi = if h.hpssapb_FirstService then
-                p.hp_pc.pc_firstServiceSpin
-              else
-                p.hp_pc.pc_secondServiceSpin
+                if h.hpssapb_ToTheRight then lowerLeftServiceBox
+                else lowerRightServiceBox
+            in
+            let spi = 
+              if h.hpssapb_FirstService then p.hp_pc.pc_firstServiceSpin
+              else p.hp_pc.pc_secondServiceSpin
             in
             { impact = curBallPos b;
               startVel = vec3dCreate velx (-. vely) velz;
@@ -2065,10 +1967,8 @@ let updateHumanPlayer ~p ~dt ~b ~opponentCurPos ~mouse ~mouseSensitivity
             }
           in
           let sou = 
-            if h.hpssapb_FirstService then
-              [ SoundNormalShot; SoundAhh] 
-            else 
-              [ SoundNormalShot; SoundHff]
+            if h.hpssapb_FirstService then [ SoundNormalShot; SoundAhh] 
+            else [ SoundNormalShot; SoundHff]
           in
           print_endline ("Service impact height: " ^ string_of_float traj.impact.y3 );
           ( createRunningBall ~traj ~scoreIndexOfLastPlayerWhoHit:p.hp_scoreIndex

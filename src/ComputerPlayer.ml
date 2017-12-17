@@ -65,8 +65,7 @@ let createComputerPlayer ~playsInTopmostCourtHalf ~plName ~scoreIndex
   }
 
 let intentionsDebug ~p = 
-  if length p.cp_pointsWonAttacking > 0 ||
-     length p.cp_pointsWonStayingBack  > 0
+  if length p.cp_pointsWonAttacking > 0 || length p.cp_pointsWonStayingBack > 0
   then
     let wa = numOf p.cp_pointsWonAttacking (fun q -> q = Won) 
     and la = numOf p.cp_pointsWonAttacking (fun q -> q = Lost) in
@@ -77,8 +76,7 @@ let intentionsDebug ~p =
     (0)
 
 let shouldAttack ~p = 
-  if length p.cp_pointsWonAttacking > 0 ||
-     length p.cp_pointsWonStayingBack  > 0
+  if length p.cp_pointsWonAttacking > 0 || length p.cp_pointsWonStayingBack > 0
   then
     let wa = numOf p.cp_pointsWonAttacking (fun q -> q = Won) 
     and la = numOf p.cp_pointsWonAttacking (fun q -> q = Lost) in
@@ -97,10 +95,8 @@ let doStepTowardsCenter ~p ~volleyOrInt ~lockInfo ~dt ~opponentZ ~ball ~prefix =
     match volleyOrInt with
     | Volley -> Volley
     | NotVolley _ ->
-      if AI.isAttacking (curPosOfComputerPlayer p) then
-        NotVolley AttackApproach
-      else
-        volleyOrInt
+      if AI.isAttacking (curPosOfComputerPlayer p) then NotVolley AttackApproach
+      else volleyOrInt
   and speedFreeRunNoFatigue = 
     if AI.isAttacking (curPosOfComputerPlayer p) then
       p.cp_pc.pc_maxSpeedInFreeRunUnderNet
@@ -110,10 +106,9 @@ let doStepTowardsCenter ~p ~volleyOrInt ~lockInfo ~dt ~opponentZ ~ball ~prefix =
   let dirsign = if p.cp_playsInTopmostCourtHalf then 1.0 else -. 1.0 in
   let pivot = 
     let aggressive = 
-      if p.cp_playsInTopmostCourtHalf then
-        vec2dCreate 0.0 (-. courtHt4 -. 424.0)
-      else
-        vec2dCreate 0.0 (courtHt4 +. 424.0)in
+      if p.cp_playsInTopmostCourtHalf then vec2dCreate 0.0 (-. courtHt4 -. 424.0)
+      else vec2dCreate 0.0 (courtHt4 +. 424.0)
+    in
     match newAttackChoice with
     | NotVolley a ->
       (match a with
@@ -132,10 +127,11 @@ let doStepTowardsCenter ~p ~volleyOrInt ~lockInfo ~dt ~opponentZ ~ball ~prefix =
         ( match ball.b_state with
           | BS_Moving bsm ->
             let ballLine = 
-              straightLineFromPointAndDir (projection2d (bsm.bsm_trajectory.impact))
+              straightLineFromPointAndDir 
+                (projection2d (bsm.bsm_trajectory.impact))
                 (projection2d (bsm.bsm_trajectory.startVel)) 
             in
-            let oppLine = { sl_a = 0.0; sl_b = 1.0; sl_c = -. opponentZ}in
+            let oppLine = { sl_a = 0.0; sl_b = 1.0; sl_c = -. opponentZ} in
             intersectionOfStraightLines oppLine ballLine
           | BS_Still _ -> assert(false)
         )
@@ -143,6 +139,7 @@ let doStepTowardsCenter ~p ~volleyOrInt ~lockInfo ~dt ~opponentZ ~ball ~prefix =
     in
     straightLineBetween pivot opponentImpact 
   in
+  (* TODO: Rename to optimalPos *)
   let optimalPosition = 
     (* la z e' fissa e dipende solo dall'intenzione di attacco. la
        	   x invece dev'essere sulla retta calda. *)
@@ -161,15 +158,15 @@ let doStepTowardsCenter ~p ~volleyOrInt ~lockInfo ~dt ~opponentZ ~ball ~prefix =
       let animName = prefix ^ "saltello" in
       setAnim ~o:p.cp_obj ~animName ~restartIfSameAnimation:false
     in 
-    ( CPS_GetBackToCenterDuringGame (newAttackChoice, optimalPosition, optimalPosition),
+    ( CPS_GetBackToCenterDuringGame
+        (newAttackChoice, optimalPosition, optimalPosition),
       { umd_timer = 0.0;
         umd_startVel = vec2dNull;
         umd_startPos = myPos},
       p.cp_fatigueData,
       o2)
   in
-  if distance2d optimalPosition myPos < 3.0 then
-    youCanStop
+  if distance2d optimalPosition myPos < 3.0 then youCanStop
   else
     let getBackSpeed, fatigueData', sprinting =
       let normalSpeed = speedFreeRunNoFatigue
@@ -196,7 +193,7 @@ let doStepTowardsCenter ~p ~volleyOrInt ~lockInfo ~dt ~opponentZ ~ball ~prefix =
             if cm < fatigueData.fatigueAvailableSprintDistance then
               Some {fatigueData with 
                     fatigueAvailableSprintDistance = 
-                      fatigueData.fatigueAvailableSprintDistance-. cm }
+                      fatigueData.fatigueAvailableSprintDistance -. cm }
             else
               None
           in
@@ -214,32 +211,27 @@ let doStepTowardsCenter ~p ~volleyOrInt ~lockInfo ~dt ~opponentZ ~ball ~prefix =
       | NotVolley intent ->
         (match intent with
          | StayBack ->
-           if abs_float myPos.x2 > courtWt2 *. 0.6 && 
-              not (shouldAttack ~p) (* spare the sprint for attacking later *)
-           then
-             trySprint
-           else
+           if abs_float myPos.x2 > courtWt2 *. 0.6 && not (shouldAttack ~p) then
+            trySprint (* spare the sprint for attacking later *)
+           else 
              ( normalSpeed, p.cp_fatigueData, false)
          | AttackWithPowerShot | AttackApproach -> trySprint
         )
       | Volley ->
-        if abs_float myPos.x2 > courtWt2 *. 0.6 then
-          trySprint
-        else
-          (normalSpeed, p.cp_fatigueData, false)
+        if abs_float myPos.x2 > courtWt2 *. 0.6 then trySprint
+        else (normalSpeed, p.cp_fatigueData, false)
     in
     let getBackPosition =
       match lockInfo with
       | HasNotLocked  -> optimalPosition
       | HasLocked (pos, time) ->
         let maxDistanceICanSpan = getBackSpeed *. time in
-        let distanceToArriveAtOptimal = distance2d myPos
-            optimalPosition in
-        if distanceToArriveAtOptimal <= maxDistanceICanSpan then
-          optimalPosition
+        let distanceToArriveAtOptimal = distance2d myPos optimalPosition in
+        if distanceToArriveAtOptimal <= maxDistanceICanSpan then optimalPosition
         else
           let circ = { c_center =  myPos;
-                       c_radius =  maxDistanceICanSpan} in
+                       c_radius =  maxDistanceICanSpan}
+          in
           let intersectCircle ci line =
             let q = -. line.sl_b in
             let a = line.sl_a in
@@ -268,58 +260,45 @@ let doStepTowardsCenter ~p ~volleyOrInt ~lockInfo ~dt ~opponentZ ~ball ~prefix =
           match may with
           | Some (p1, p2) ->
             let closestToOptimum ~p1 ~p2 ~optimalPosition =
-              if distance2d p1 optimalPosition < distance2d p2 optimalPosition then
-                p1
-              else
-                p2
+              if distance2d p1 optimalPosition < distance2d p2 optimalPosition then p1
+              else p2
             in
             let closestToNet ~p1 ~p2 =
-              if abs_float p1.z2 < abs_float p2.z2 then p1 else p2 in
+              if abs_float p1.z2 < abs_float p2.z2 then p1 else p2
+            in
             let farthestFromNet p1 p2 =
-              if abs_float p1.z2 > abs_float p2.z2 then p1 else p2 in
-            if p.cp_playsInTopmostCourtHalf then
-              (* se sono entrambi nella mia meta' campo... *)
-              if p1.z2 < -.200.0 && p2.z2 < -.200.0 then
-                match newAttackChoice with
-                | NotVolley _ -> closestToOptimum ~p1 ~p2 ~optimalPosition
-                | Volley -> closestToNet ~p1 ~p2
-              else
-                (* scelgo quella nella mia meta' campo *)
-              if p1.z2 < -. 200.0 then
-                p1
-              else if p2.z2 < -. 200.0 then
-                p2
-              else
-                farthestFromNet p1 p2
-            else
-            if p1.z2 > 200.0 && p2.z2 > 200.0 then
+              if abs_float p1.z2 > abs_float p2.z2 then p1 else p2
+            in
+            let newAttackPos =
               match newAttackChoice with
               | NotVolley _ -> closestToOptimum ~p1 ~p2 ~optimalPosition
               | Volley -> closestToNet ~p1 ~p2
+            in
+            if p.cp_playsInTopmostCourtHalf then
+              (* se sono entrambi nella mia meta' campo... *)
+              if p1.z2 < -.200.0 && p2.z2 < -.200.0 then newAttackPos 
+              (* scelgo quella nella mia meta' campo *)
+              else if p1.z2 < -. 200.0 then p1
+              else if p2.z2 < -. 200.0 then p2
+              else farthestFromNet p1 p2
             else
-            if p1.z2 > 200.0 then
-              p1
-            else if p2.z2 > 200.0 then
-              p2
-            else
-              farthestFromNet p1 p2
+              if p1.z2 > 200.0 && p2.z2 > 200.0 then newAttackPos
+              else if p1.z2 > 200.0 then p1
+              else if p2.z2 > 200.0 then p2
+              else farthestFromNet p1 p2
           | None ->
             (* se la retta e la circonferenza non si intersecano, non arriveremo
               mai alla retta calda, indipendentemente da in che direzione
               corriamo. In tal caso il punto di rientro e' il piu' vicino alla
               retta calda (in direzione ortogonale).  vedi quadernino *)
-            let xc = pos.x2 in
-            let zc = pos.z2 in
-            let xh = pivot.x2 in
-            let zh = pivot.z2 in
             let xp = myPos.x2 in
             let zp = myPos.z2 in
             let a = hotLine.sl_a in
             assert ( a != 0.0);
             let b = hotLine.sl_b in
             let c = hotLine.sl_c in
-            let d = xc -. xh in
-            let e = zc -. zh in
+            let d = pos.x2 -. pivot.x2 in
+            let e = pos.z2 -. pivot.z2 in
             let zq = ( d *. c  +. d *. a *. xp +. e *. a *. zp)
                       /. (e *. a -. d *. b) in
             let xq = ( -. c -. b *. zq ) /. a in
@@ -342,7 +321,8 @@ let doStepTowardsCenter ~p ~volleyOrInt ~lockInfo ~dt ~opponentZ ~ball ~prefix =
     let velz =  getBackSpeed *. cos ang in
     let st = 
     (* let deltaX = distance2d getBackPosition myPos in * XXX: Unused variable *)
-      CPS_GetBackToCenterDuringGame ( newAttackChoice, getBackPosition, optimalPosition)
+      CPS_GetBackToCenterDuringGame 
+          (newAttackChoice, getBackPosition, optimalPosition)
     in
     let umd = {umd_timer = 0.0;
                umd_startVel= vec2dCreate velx velz;
@@ -358,23 +338,22 @@ let updateMemoryOfPointsWonAndLost ~p ~won ~opponentCurPos =
     else
       p.cp_pointsWonAttacking, Won::p.cp_pointsWonStayingBack
   else
-  if iAmUnderNet then
+    if iAmUnderNet then
     (* The reason I lost may be that I attacked, OR that I 
        	       attacked too late, i.e. that I stayed back *)
-    if AI.isAttacking opponentCurPos then
+      if AI.isAttacking opponentCurPos then
       (* presumably the human has forced me to attack after him. Then,
  		   the reason I lost is not that I attacked, but that I attacked too late! 
          		   I.e. I lost a point staying back! *)
-      p.cp_pointsWonAttacking, Lost::p.cp_pointsWonStayingBack
+        p.cp_pointsWonAttacking, Lost::p.cp_pointsWonStayingBack
+      else
+        Lost::p.cp_pointsWonAttacking, p.cp_pointsWonStayingBack
     else
-      Lost::p.cp_pointsWonAttacking, p.cp_pointsWonStayingBack
-  else
-    p.cp_pointsWonAttacking, Lost::p.cp_pointsWonStayingBack
+      p.cp_pointsWonAttacking, Lost::p.cp_pointsWonStayingBack
 
 let judgeImpactPointComp ~cp ~isVolley ~opponentCurPos ~impact
     ~footTarget ~mat  ~isService ~iWantToAttack =
-  if impact.y3 <= 0.1 then
-    IV_Zero
+  if impact.y3 <= 0.1 then IV_Zero
   else if cp.cp_playsInTopmostCourtHalf && impact.z3 > -. minZIcanHitTheBall then
     IV_Zero
   else if (not cp.cp_playsInTopmostCourtHalf) && impact.z3 < minZIcanHitTheBall then
@@ -386,8 +365,7 @@ let judgeImpactPointComp ~cp ~isVolley ~opponentCurPos ~impact
       and q =
         if iAmForcedToAttack then
           if iWantToAttack then 1 else (* give a chance to groundstrokes *) 2
-        else
-          3 
+        else 3 
       in
       IV_NonZero (q, v, Volley)
     else
@@ -424,34 +402,24 @@ let judgeImpactPointComp ~cp ~isVolley ~opponentCurPos ~impact
                     | Some q ->
                       if q = d then AttackWithPowerShot else AttackApproach )
               in
-              if iAmForcedToAttack then
-                AttackWithPowerShot
-              else if iWantToAttack then
-                chooseKindOfAttack
-              else
-                StayBack
+              if iAmForcedToAttack then AttackWithPowerShot
+              else if iWantToAttack then chooseKindOfAttack
+              else StayBack
             in
-            if abs_float impact.z3  < courtHt2 -. 100.0 then
-              maybeAttack
-            else
-              StayBack
+            if abs_float impact.z3  < courtHt2 -. 100.0 then maybeAttack
+            else StayBack
           in
           (* first, test the impact height : *)
           if abs_float impact.z3 > courtHt2 *. 0.68 then
-            if impact.y3 < 25.0 then 
-              StayBack
-            else
-              (* impact ht is enough, test the z *)
-              decideZtest
-          else
-            (* impact ht irrelevant, test the z *)
-            decideZtest
+            if impact.y3 < 25.0 then StayBack
+            else (* impact ht is enough, test the z *) decideZtest
+          else (* impact ht irrelevant, test the z *) decideZtest
         in (* chooseAttack *)
         chooseAttackForImpactPoint  ~impact ~cp ~opponent:opponentCurPos ~mat
       in
       match ac with 
       | StayBack ->
-        (* @@ ignoring pc_tendsToAnticipateGroundShots .
+        (* FIXME: @@ ignoring pc_tendsToAnticipateGroundShots .
  			     Strange. Sometimes, on grass, responding to service, the player 
  			     goes very much backwards. Even if voteClosenessToGroundLine is the 
  			     only parameter. *)
@@ -501,11 +469,11 @@ let chooseBestResearch ~playerCurPos ~opponentCurPos
           (curBallPos ball).z3 > minZIcanHitTheBall
       in
       let numPointsToJudge = 180 in
-      let secondPointForResearch = whereWillTheBallMakeSecondBounce ~b:ball ~bsm
-          ~surf
+      let secondPointForResearch = 
+            whereWillTheBallMakeSecondBounce ~b:ball ~bsm ~surf
       in
       let maybeFirstPointforResearch = 
-        if theBallHasAlreadyCrossedTheNet  then
+        if theBallHasAlreadyCrossedTheNet then
           Some (projection2d (curBallPos ball))
         else
           let fifty =
@@ -514,8 +482,7 @@ let chooseBestResearch ~playerCurPos ~opponentCurPos
           in
           let may = whenWillTheTrajArriveAtZ ~z:fifty ~t:bsm.bsm_trajectory  in
           match may with
-          | None -> (* happens on short dropshot that bounces backwards :-) *) 
-            None
+          | None -> None (* @@ happens on short dropshot that bounces backwards *) 
           | Some iata -> Some (vec2dCreate iata.iata_x fifty)
       in
       match maybeFirstPointforResearch with
@@ -612,7 +579,7 @@ let chooseBestResearch ~playerCurPos ~opponentCurPos
                   ~iWantToAttack
               in
 
-              let computeDeltaOpening ~isForehand ~researchKind= 
+              let computeDeltaOpening ~isForehand ~researchKind = 
                 let prefix =
                   if p.cp_playsInTopmostCourtHalf then gfxDir ^ "/A"
                   else gfxDir ^ "/B"
@@ -660,8 +627,7 @@ let chooseBestResearch ~playerCurPos ~opponentCurPos
                       (speedFreeRun *. cos runAngle)  (* @@ it is - speedFreeRun for humans*)
                 in		
                 let speedAftOpening = 
-                  if v2 < 0.0 then
-                    vec2dCreate 0.0 0.0 
+                  if v2 < 0.0 then vec2dCreate 0.0 0.0 
                   else
                     vec2dCreate (signX *. v2 *. sin runAngle) 
                       ( v2 *. cos runAngle (* it is - v2 for humans *) )
@@ -758,18 +724,16 @@ let chooseBestResearch ~playerCurPos ~opponentCurPos
                 | IV_Zero -> tryStretchSh
                 | IV_NonZero  (qualNor, voteNor, volleyOrIntNorm) ->
                   let vot = 
-                    if isVolley then
-                      VOTI_Volee 
+                    if isVolley then VOTI_Volee 
                     else
                       match volleyOrIntNorm with 
                       | Volley -> assert false
                       | NotVolley int ->
-                        let isTopSpin = (* @@ wrong. I should have already decided whether to do backspin or topspin...
-                                           											   but it's very expensive. *) true in 
-                        if isTopSpin then
-                          VOTI_NotVolee (Topspin, int)
-                        else
-                          VOTI_NotVolee (Backspin, int)
+                      (* FIXME: @@ wrong. I should have already decided whether
+                        to do backspin or topspin...but it's very expensive. *)
+                        let isTopSpin = true in 
+                        if isTopSpin then VOTI_NotVolee (Topspin, int)
+                        else VOTI_NotVolee (Backspin, int)
                   in
                   let deltaOpening =  computeDeltaOpening 
                       ~researchKind:(RKC_Normal vot) ~isForehand
@@ -1360,7 +1324,7 @@ let chooseTrajectory ~p  ~impact ~opponentPos ~ballVelAtImpact
       | RKC_StretchForward _ ->
         p.cp_pc.pc_maxShotPower *. powerAttenuationForStretchForwardAndDive
     in
-    po  +. (abs_float ballVelAtImpact.z3) *. p.cp_pc.pc_exploitationOfOpponentsPower 
+    po +. (abs_float ballVelAtImpact.z3) *. p.cp_pc.pc_exploitationOfOpponentsPower 
   in
   let maybeTrajDatas = 
     List.map

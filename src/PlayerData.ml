@@ -212,6 +212,7 @@ type computerPlayer = {
   cp_obj: obj3d; 
   cp_pc: playerCommon;
   cp_name : playerName;
+  (* FIXME: Rename to something shorter, e.g., playsInTopHalf *)
   cp_playsInTopmostCourtHalf: bool;
   cp_fatigueData : fatigueData;
   cp_scoreIndex:int;
